@@ -42,7 +42,7 @@
 ## Installation
 
 ```bash
-git clone [https://github.com/yourusername/agonis.git](https://github.com/bernam07/agonis.git)
+git clone https://github.com/bernam07/agonis.git
 cd agonis
 npm install
 ```
@@ -52,7 +52,7 @@ npm install
 Create a `.env.local` file in the root of your frontend project and add your Supabase credentials:
 
 ```text
-VITE_SUPABASE_URL=[https://your-project-id.supabase.co](https://your-project-id.supabase.co)
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 

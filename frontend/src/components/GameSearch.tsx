@@ -27,7 +27,7 @@ export default function GameSearch() {
   const loadRecommendations = async () => {
     setLoading(true)
     const { data, error } = await supabase.functions.invoke('search-igdb', { 
-      body: { searchQuery: "Cyberpunk" } 
+      body: { searchQuery: "The Last of Us" } 
     })
     if (!error && data) setResults(data)
     setLoading(false)

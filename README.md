@@ -13,7 +13,7 @@
 *   **Library Management:** Organize your games into custom lists: *Backlog, Playing, Completed, Dropped,* and *100% Completed*.
 *   **Rating & Reviews:** Rate games out of 5 stars (Masterpieces) and write personal notes, reviews, and completion dates.
 
-### 🌐 Social Feed
+### Social Feed
 *   **Community Posts:** Share what you are playing, your thoughts, and your gaming achievements.
 *   **Game Tagging:** Tag specific games from your personal library directly into your posts.
 *   **Interactive Feed:** Like posts from other users and jump directly to their profiles.
@@ -56,7 +56,7 @@ VITE_SUPABASE_URL=[https://your-project-id.supabase.co](https://your-project-id.
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### 4. Supabase Setup (Backend)
+### Supabase Setup (Backend)
 Ensure your Supabase project is configured with the following tables:
 *   `profiles` (id, username, bio, avatar_url, is_public)
 *   `user_games` (user_id, igdb_id, status, rating, review, completed_at)
@@ -65,7 +65,7 @@ Ensure your Supabase project is configured with the following tables:
 *   `follows` (follower_id, following_id)
 *   **Storage Bucket:** `avatars` (Public)
 
-### 5. Deploy Edge Functions
+### Deploy Edge Functions
 Deploy the IGDB search function to your Supabase project. Don't forget to set your IGDB/Twitch secrets in Supabase!
 ```bash
 supabase functions deploy search-igdb

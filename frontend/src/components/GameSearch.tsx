@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import GameModal from './GameModal'
 
@@ -24,38 +24,68 @@ export default function GameSearch() {
   const [loading, setLoading] = useState(false)
   const [selectedGame, setSelectedGame] = useState<any>(null)
 
+  const loadRecommendations = async () => {
+    setLoading(true)
+    const { data, error } = await supabase.functions.invoke('search-igdb', { 
+      body: { searchQuery: "Cyberpunk" } 
+    })
+    if (!error && data) setResults(data)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadRecommendations()
+  }, [])
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!query.trim()) return loadRecommendations()
     setLoading(true)
     const { data, error } = await supabase.functions.invoke('search-igdb', { body: { searchQuery: query } })
     if (!error) setResults(data)
     setLoading(false)
   }
 
-  const cardClass = "bg-gray-100 dark:bg-gray-800 shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] dark:shadow-[8px_8px_16px_#111827,-8px_-8px_16px_#374151] rounded-3xl p-4 cursor-pointer transform transition-transform hover:-translate-y-1"
-
   return (
     <div className="w-full">
-      <form onSubmit={handleSearch} className="flex gap-4 mb-10">
+      <form onSubmit={handleSearch} className="flex gap-3 mb-8">
         <input 
           type="text" 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search IGDB..."
-          className="flex-1 p-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-100 outline-none shadow-[inset_6px_6px_10px_#d1d5db,inset_-6px_-6px_10px_#ffffff] dark:shadow-[inset_6px_6px_10px_#111827,inset_-6px_-6px_10px_#374151]"
+          placeholder="Search games, franchises, genres..."
+          className="flex-1 p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 outline-none focus:border-zinc-700 transition-colors text-sm font-medium"
         />
-        <button type="submit" className="px-8 py-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-blue-600 font-bold shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#111827,-6px_-6px_12px_#374151]">
+        <button type="submit" className="px-6 py-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 font-bold text-sm text-zinc-200 transition-colors">
           {loading ? '...' : 'Search'}
         </button>
       </form>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+      <div className="mb-4 px-1">
+        <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+          {query ? 'Search Results' : 'Trending & Recommendations'}
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {results.map((game) => (
-          <div key={game.id} onClick={() => setSelectedGame(game)} className={cardClass}>
-            {game.cover?.url && (
-              <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full aspect-[3/4] object-cover rounded-2xl mb-4 shadow-inner" />
-            )}
-            <h3 className="font-bold text-center mb-2 line-clamp-2">{game.name}</h3>
+          <div 
+            key={game.id} 
+            onClick={() => setSelectedGame(game)} 
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-zinc-700 transition-all flex flex-col"
+          >
+            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
+              {game.cover?.url ? (
+                <img 
+                  src={game.cover.url.replace('t_thumb', 't_cover_big')} 
+                  alt={game.name} 
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs font-semibold">No Artwork</div>
+              )}
+            </div>
+            <h3 className="font-bold text-sm text-zinc-200 line-clamp-2 text-center px-1 mt-auto">{game.name}</h3>
           </div>
         ))}
       </div>
@@ -64,7 +94,7 @@ export default function GameSearch() {
         <GameModal 
           game={selectedGame} 
           onClose={() => setSelectedGame(null)} 
-          onRefresh={() => {}}
+          onRefresh={() => {}} 
         />
       )}
     </div>

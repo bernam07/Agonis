@@ -35,45 +35,54 @@ export default function Auth() {
     setLoading(true)
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) alert(error.message)
-    else alert('Success! You can now log in.')
+    else alert('Account created! You can now log in.')
     setLoading(false)
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
-      <form className="flex flex-col gap-4 w-full max-w-sm bg-white p-8 rounded-xl shadow-sm border">
-        <h1 className="text-2xl font-bold text-center mb-2">Welcome to Agonis</h1>
-        <p className="text-sm text-gray-500 text-center mb-4">Sign in to track your games</p>
-        
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 rounded text-black outline-none focus:border-blue-500"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 rounded text-black outline-none focus:border-blue-500"
-        />
-        
-        <div className="flex gap-2 mt-2">
-          <button 
-            onClick={handleLogin} 
-            disabled={loading} 
-            className="bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition"
+    <div className="w-full max-w-md p-8 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-black tracking-tighter text-indigo-500 mb-2">AGONIS</h1>
+        <p className="text-zinc-400 text-sm font-medium">Track, rate, and discuss your games</p>
+      </div>
+
+      <form className="flex flex-col gap-4">
+        <div>
+          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">Email Address</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
+          />
+        </div>
+
+        <div className="flex flex-col gap-3 mt-4">
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm shadow-lg shadow-indigo-600/10"
           >
-            Login
+            {loading ? 'Connecting...' : 'Sign In'}
           </button>
-          <button 
-            onClick={handleSignUp} 
-            disabled={loading} 
-            className="bg-gray-200 text-black p-2 rounded w-full hover:bg-gray-300 transition"
+          <button
+            onClick={handleSignUp}
+            disabled={loading}
+            className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm border border-zinc-700"
           >
-            Sign Up
+            Create Account
           </button>
         </div>
       </form>

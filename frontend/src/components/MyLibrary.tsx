@@ -18,10 +18,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import GameModal from './GameModal'
 
-export default function MyLibrary() {
-  const [library, setLibrary] = useState<any[]>([])
+export default function MyLibrary({ library, setLibrary }: { library: any[], setLibrary: (lib: any[]) => void }) {
   const [loading, setLoading] = useState(true)
   const [selectedGame, setSelectedGame] = useState<any>(null)
+  const [filter, setFilter] = useState<string>('all')
 
   const fetchMyGames = async () => {
     const { data: userGames } = await supabase.from('user_games').select('*')
@@ -36,42 +36,67 @@ export default function MyLibrary() {
 
     if (igdbGames) {
       const combined = userGames.map(dbGame => ({ ...dbGame, ...igdbGames.find((g: any) => g.id === dbGame.igdb_id) }))
-      setLibrary(combined)
+      setLibrary(combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
     }
     setLoading(false)
   }
 
-  useEffect(() => { fetchMyGames() }, [])
+  useEffect(() => { 
+    if (library.length === 0) fetchMyGames() 
+    else setLoading(false)
+  }, [])
 
-  const cardClass = "bg-gray-100 dark:bg-gray-800 shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] dark:shadow-[8px_8px_16px_#111827,-8px_-8px_16px_#374151] rounded-3xl p-4 cursor-pointer transform transition-transform hover:-translate-y-1 relative"
+  const filteredLibrary = library.filter(game => filter === 'all' || game.status === filter)
 
-  if (loading) return <p>Loading library...</p>
-  if (library.length === 0) return <p>Your library is empty. Go add some games!</p>
+  if (loading) return <div className="text-zinc-500 text-center py-12 font-medium">Loading library...</div>
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-        {library.map((game) => (
-          <div key={game.id} onClick={() => setSelectedGame(game)} className={cardClass}>
-            
-            {/* Status Badge */}
-            <span className="absolute top-6 right-6 z-10 text-xs font-bold bg-gray-900/80 text-white px-3 py-1 rounded-full capitalize backdrop-blur-md">
-              {game.status.replace('_', ' ')}
-            </span>
-
-            {game.cover?.url && (
-              <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full aspect-[3/4] object-cover rounded-2xl mb-4 shadow-inner" />
-            )}
-            
-            <h3 className="font-bold text-center mb-1 line-clamp-1">{game.name}</h3>
-            
-            {/* Stars on Card */}
-            <div className="flex justify-center text-yellow-500 text-sm">
-              {'★'.repeat(game.rating || 0)}{'☆'.repeat(5 - (game.rating || 0))}
-            </div>
-          </div>
+      <div className="flex flex-wrap gap-2 mb-8 border-b border-zinc-900 pb-4">
+        {['all', 'backlog', 'playing', 'completed', 'dropped', '100_percent'].map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-colors capitalize ${
+              filter === status 
+                ? 'bg-zinc-100 text-zinc-950 border-zinc-100' 
+                : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+            }`}
+          >
+            {status.replace('_', ' ')}
+          </button>
         ))}
       </div>
+
+      {filteredLibrary.length === 0 ? (
+        <div className="text-center py-12 text-zinc-500 font-medium">No games found in this category.</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          {filteredLibrary.map((game) => (
+            <div 
+              key={game.id} 
+              onClick={() => setSelectedGame(game)} 
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-zinc-700 transition-all relative flex flex-col"
+            >
+              <span className="absolute top-5 right-5 z-10 text-[10px] font-black bg-zinc-950/90 text-zinc-300 border border-zinc-800 px-2 py-0.5 rounded-md capitalize backdrop-blur-sm">
+                {game.status.replace('_', ' ')}
+              </span>
+
+              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
+                {game.cover?.url && (
+                  <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full h-full object-cover" />
+                )}
+              </div>
+              
+              <h3 className="font-bold text-sm text-zinc-200 line-clamp-1 text-center px-1 mb-1">{game.name}</h3>
+              
+              <div className="flex justify-center text-amber-400 text-xs mt-auto">
+                {'★'.repeat(game.rating || 0)}{'☆'.repeat(5 - (game.rating || 0))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {selectedGame && (
         <GameModal 

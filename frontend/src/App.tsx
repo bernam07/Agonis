@@ -19,66 +19,62 @@ import { supabase } from './lib/supabase'
 import GameSearch from './components/GameSearch'
 import Auth from './components/Auth'
 import MyLibrary from './components/MyLibrary'
+import Feed from './components/Feed'
+import Profile from './components/Profile'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'search' | 'library'>('library')
-  const [darkMode, setDarkMode] = useState(true) // Começa em Dark Mode!
+  const [activeTab, setActiveTab] = useState<'feed' | 'search' | 'library' | 'profile'>('feed')
+  const [globalLibrary, setGlobalLibrary] = useState<any[]>([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
     return () => subscription.unsubscribe()
   }, [])
 
   if (!session) return (
-    <div className={darkMode ? 'dark' : ''}>
+    <div className="dark bg-zinc-950 min-h-screen text-zinc-100 flex items-center justify-center">
       <Auth />
     </div>
   )
 
-  const btnClass = "px-6 py-2 rounded-xl font-bold transition-all shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#111827,-6px_-6px_12px_#374151]"
-  const activeBtnClass = "px-6 py-2 rounded-xl font-bold transition-all text-blue-500 shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#111827,inset_-4px_-4px_8px_#374151]"
+  const navItemClass = (tab: string) => `
+    px-4 py-2 rounded-lg font-medium text-sm transition-all
+    ${activeTab === tab ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'}
+  `
 
   return (
-    <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 font-sans pb-12 transition-colors duration-300">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8">
+    <div className="dark bg-zinc-950 min-h-screen text-zinc-100 font-sans selection:bg-indigo-500/30">
+      <nav className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-black tracking-tighter text-white">
+            AGONIS
+          </h1>
           
-          <header className="px-8 py-6 mb-12 flex flex-col md:flex-row justify-between items-center rounded-3xl bg-gray-100 dark:bg-gray-800 shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] dark:shadow-[8px_8px_16px_#111827,-8px_-8px_16px_#374151] gap-4">
-            <h1 className="text-3xl font-extrabold tracking-tight text-blue-600 dark:text-blue-500">Agonis</h1>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setActiveTab('feed')} className={navItemClass('feed')}>Feed</button>
+            <button onClick={() => setActiveTab('search')} className={navItemClass('search')}>Discover</button>
+            <button onClick={() => setActiveTab('library')} className={navItemClass('library')}>Library</button>
+            <button onClick={() => setActiveTab('profile')} className={navItemClass('profile')}>Profile</button>
             
-            <div className="flex flex-wrap gap-4 items-center justify-center">
-              <button 
-                onClick={() => setActiveTab('library')}
-                className={activeTab === 'library' ? activeBtnClass : btnClass}
-              >
-                My Library
-              </button>
-              <button 
-                onClick={() => setActiveTab('search')}
-                className={activeTab === 'search' ? activeBtnClass : btnClass}
-              >
-                Add Games
-              </button>
-              
-              <div className="w-px h-8 bg-gray-300 dark:bg-gray-700 mx-2"></div>
-              
-              <button onClick={() => setDarkMode(!darkMode)} className={`text-xl ${btnClass}`}>
-                {darkMode ? '☀️' : '🌙'}
-              </button>
-              
-              <button onClick={() => supabase.auth.signOut()} className={`text-red-500 ${btnClass}`}>
-                Logout
-              </button>
-            </div>
-          </header>
-          
-          <main>
-            {activeTab === 'search' ? <GameSearch /> : <MyLibrary />}
-          </main>
+            <div className="w-px h-4 bg-zinc-800 mx-3"></div>
+            
+            <button onClick={() => supabase.auth.signOut()} className="text-xs font-semibold text-rose-500 hover:text-rose-400 px-3 py-2">
+              Log out
+            </button>
+          </div>
         </div>
-      </div>
+      </nav>
+      
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        {activeTab === 'feed' && <Feed />}
+        {activeTab === 'search' && <GameSearch />}
+        {activeTab === 'library' && <MyLibrary library={globalLibrary} setLibrary={setGlobalLibrary} />}
+        {activeTab === 'profile' && <Profile library={globalLibrary} />}
+      </main>
     </div>
   )
 }

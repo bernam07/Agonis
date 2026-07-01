@@ -22,24 +22,31 @@ const STATUSES = [
   { id: 'playing', label: 'Playing' },
   { id: 'completed', label: 'Completed' },
   { id: 'dropped', label: 'Dropped' },
-  { id: '100_percent', label: '100% Completed' }
+  { id: '100_percent', label: '100%' }
 ]
 
 export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
   const [status, setStatus] = useState(userGame?.status || 'backlog')
   const [rating, setRating] = useState(userGame?.rating || 0)
+  const [review, setReview] = useState(userGame?.review || '')
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'track' | 'details'>('track')
 
   const saveGame = async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (user) {
+      const completedDate = status === 'completed' || status === '100_percent' 
+        ? (userGame?.completed_at || new Date().toISOString()) 
+        : null
+
       await supabase.from('user_games').upsert({
         user_id: user.id,
         igdb_id: game.id || game.igdb_id,
         status: status,
         rating: rating > 0 ? rating : null,
+        review: review.trim() === '' ? null : review,
+        completed_at: completedDate
       }, { onConflict: 'user_id,igdb_id' })
       
       onRefresh()
@@ -57,32 +64,24 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
     onClose()
   }
 
-  const bgClass = "bg-gray-100 dark:bg-gray-800"
-  const shadowClass = "shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] dark:shadow-[8px_8px_16px_#111827,-8px_-8px_16px_#374151]"
-  const innerShadowClass = "shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#111827,inset_-4px_-4px_8px_#374151]"
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className={`w-full max-w-md p-6 rounded-3xl ${bgClass} ${shadowClass} text-gray-800 dark:text-gray-100`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md overflow-y-auto">
+      <div className="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-zinc-100 my-8 shadow-2xl">
         
-        <div className="flex gap-4 mb-6">
-          {game.cover?.url && (
-            <img 
-              src={game.cover.url.replace('t_thumb', 't_cover_big')} 
-              alt={game.name} 
-              className={`w-1/3 rounded-xl object-cover ${innerShadowClass}`}
-            />
-          )}
-          <div className="flex-1 flex flex-col justify-center">
-            <h2 className="text-xl font-bold mb-2">{game.name}</h2>
-            
-            {/* Sistema de 5 Estrelas */}
+        <div className="flex gap-5 mb-6">
+          <div className="w-28 aspect-[3/4] bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shrink-0">
+            {game.cover?.url && (
+              <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full h-full object-cover" />
+            )}
+          </div>
+          <div className="flex flex-col justify-center">
+            <h2 className="text-xl font-black text-white mb-2 leading-tight">{game.name}</h2>
             <div className="flex gap-1 mb-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button 
                   key={star}
                   onClick={() => setRating(star)}
-                  className={`text-2xl transition-transform hover:scale-110 ${rating >= star ? 'text-yellow-500' : 'text-gray-400 dark:text-gray-600'}`}
+                  className={`text-2xl transition-transform hover:scale-105 ${rating >= star ? 'text-amber-400' : 'text-zinc-700'}`}
                 >
                   ★
                 </button>
@@ -91,39 +90,84 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
           </div>
         </div>
 
-        {/* Dropdown de Status */}
-        <div className="mb-6">
-          <label className="block text-sm font-bold mb-2 text-gray-600 dark:text-gray-400">Current Status</label>
-          <div className={`flex flex-col gap-2 p-2 rounded-2xl ${innerShadowClass}`}>
-            {STATUSES.map(s => (
-              <button
-                key={s.id}
-                onClick={() => setStatus(s.id)}
-                className={`py-2 px-4 rounded-xl font-bold transition-all ${
-                  status === s.id 
-                    ? `bg-blue-500 text-white shadow-md` 
-                    : `text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700`
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+        <div className="flex border-b border-zinc-800 mb-6 gap-4">
+          <button 
+            onClick={() => setActiveTab('track')}
+            className={`pb-2 text-sm font-bold transition-colors ${activeTab === 'track' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500'}`}
+          >
+            Track Status
+          </button>
+          <button 
+            onClick={() => setActiveTab('details')}
+            className={`pb-2 text-sm font-bold transition-colors ${activeTab === 'details' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500'}`}
+          >
+            Game Details
+          </button>
         </div>
 
-        <div className="flex justify-between gap-4 mt-8">
-          <button onClick={onClose} className={`px-6 py-3 rounded-xl font-bold ${bgClass} ${shadowClass} hover:text-red-500`}>
-            Cancel
+        {activeTab === 'track' ? (
+          <div>
+            <div className="mb-6">
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">Status</label>
+              <div className="grid grid-cols-5 bg-zinc-950 p-1 border border-zinc-800 rounded-xl gap-1">
+                {STATUSES.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setStatus(s.id)}
+                    className={`py-2 text-center rounded-lg font-bold text-xs transition-colors ${
+                      status === s.id ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Notes & Review</label>
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                placeholder="Write your logs or thoughts here..."
+                rows={4}
+                className="w-full p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-200 outline-none resize-none text-sm font-medium focus:border-zinc-700 transition-colors"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
+            {game.summary && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Summary</h4>
+                <p className="text-zinc-300 text-sm leading-relaxed font-medium">{game.summary}</p>
+              </div>
+            )}
+            {game.platforms && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Platforms</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {game.platforms.map((p: any) => (
+                    <span key={p.id} className="text-xs bg-zinc-950 border border-zinc-800 text-zinc-400 px-2.5 py-1 rounded-md font-medium">{p.name}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-between items-center pt-4 border-t border-zinc-800 mt-6">
+          <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors">
+            Close
           </button>
-          
           <div className="flex gap-2">
             {userGame && (
-              <button onClick={deleteGame} className={`px-4 py-3 rounded-xl font-bold text-red-500 ${bgClass} ${innerShadowClass}`}>
+              <button onClick={deleteGame} className="px-4 py-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 text-sm font-bold transition-colors">
                 Remove
               </button>
             )}
-            <button onClick={saveGame} disabled={loading} className={`px-6 py-3 rounded-xl font-bold text-blue-500 ${bgClass} ${shadowClass} active:${innerShadowClass}`}>
-              {loading ? 'Saving...' : 'Save Game'}
+            <button onClick={saveGame} disabled={loading} className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-colors">
+              {loading ? '...' : 'Save Changes'}
             </button>
           </div>
         </div>

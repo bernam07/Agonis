@@ -64,7 +64,7 @@ export default function GameSearch() {
         <GameModal 
           game={selectedGame} 
           onClose={() => setSelectedGame(null)} 
-          onRefresh={() => {}} // Na pesquisa não precisamos de dar refresh
+          onRefresh={() => {}}
         />
       )}
     </div>

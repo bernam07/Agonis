@@ -35,7 +35,6 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
-      // O upsert adiciona se for novo, ou atualiza se já existir (usando a constraint UNIQUE que criámos)
       await supabase.from('user_games').upsert({
         user_id: user.id,
         igdb_id: game.id || game.igdb_id,
@@ -43,7 +42,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
         rating: rating > 0 ? rating : null,
       }, { onConflict: 'user_id,igdb_id' })
       
-      onRefresh() // Atualiza a lista por trás
+      onRefresh()
     }
     setLoading(false)
     onClose()
@@ -58,7 +57,6 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
     onClose()
   }
 
-  // Classes neumórficas para o Dark Mode
   const bgClass = "bg-gray-100 dark:bg-gray-800"
   const shadowClass = "shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] dark:shadow-[8px_8px_16px_#111827,-8px_-8px_16px_#374151]"
   const innerShadowClass = "shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#111827,inset_-4px_-4px_8px_#374151]"

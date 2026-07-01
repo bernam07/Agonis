@@ -76,9 +76,9 @@ export default function MyLibrary() {
       {selectedGame && (
         <GameModal 
           game={selectedGame} 
-          userGame={selectedGame} // Passamos o userGame para o modal saber o status/rating atual
+          userGame={selectedGame}
           onClose={() => setSelectedGame(null)} 
-          onRefresh={fetchMyGames} // Atualiza a biblioteca quando fechas o modal
+          onRefresh={fetchMyGames}
         />
       )}
     </div>

@@ -14,18 +14,19 @@
    limitations under the License.
 */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Notifications({ onUserClick }: { onUserClick: (id: string) => void }) {
   const [notifications, setNotifications] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
+  
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchNotifications()
     
-    // Subscrever a novas notificações em tempo real
     const channel = supabase.channel('realtime-notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
         fetchNotifications()
@@ -33,6 +34,20 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
   const fetchNotifications = async () => {
@@ -71,7 +86,7 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={menuRef}>
       <button 
         onClick={toggleDropdown}
         className="relative p-2 text-zinc-400 hover:text-white transition-colors"

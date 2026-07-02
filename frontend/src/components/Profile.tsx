@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import GameModal from './GameModal'
 
 export default function Profile({ userId, onBack }: { userId?: string | null, onBack?: () => void }) {
   const [profile, setProfile] = useState<any>(null)
@@ -38,6 +39,8 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
   const [followingCount, setFollowingCount] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
 
+  const [selectedGame, setSelectedGame] = useState<any>(null)
+
   useEffect(() => {
     loadProfile()
   }, [userId])
@@ -51,7 +54,6 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
 
     setIsCurrentUser(user?.id === targetId)
 
-    // 1. Carregar Perfil
     const { data: profileData } = await supabase.from('profiles').select('*').eq('id', targetId).single()
     if (profileData) {
       setProfile(profileData)
@@ -61,7 +63,6 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
       setEditIsPublic(profileData.is_public ?? true)
     }
 
-    // 2. Carregar Seguidores
     const { count: f1 } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetId)
     const { count: f2 } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetId)
     setFollowersCount(f1 || 0)
@@ -72,7 +73,6 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
       setIsFollowing(!!followData)
     }
 
-    // 3. Carregar Posts e Jogos
     const { data: postsData } = await supabase.from('posts').select('*').eq('user_id', targetId).order('created_at', { ascending: false })
     if (postsData) setMyPosts(postsData)
 
@@ -88,7 +88,17 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
     setLoading(false)
   }
 
-  // Função para dar Follow/Unfollow
+  const handleGameClick = (userGame: any) => {
+    setSelectedGame({
+      game: {
+        id: userGame.igdb_id,
+        name: userGame.game_name || userGame.name,
+        cover: userGame.cover || { url: userGame.game_cover }
+      },
+      userGame: userGame
+    })
+  }
+
   const toggleFollow = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !profile) return
@@ -175,7 +185,6 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
         </div>
       )}
 
-      {/* HEADER DO PERFIL */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative">
         <div className="w-32 h-32 rounded-full bg-zinc-800 border-4 border-zinc-950 flex items-center justify-center text-5xl font-black text-zinc-500 overflow-hidden shrink-0 shadow-xl">
           {profile.avatar_url ? <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" /> : profile.username?.charAt(0).toUpperCase()}
@@ -220,7 +229,6 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
               <div className="flex items-center gap-4 justify-center md:justify-start mb-2">
                 <h2 className="text-3xl font-black text-white">@{profile.username}</h2>
                 
-                {/* Botão Follow ou Settings */}
                 {isCurrentUser ? (
                   <button onClick={() => setIsEditing(true)} className="text-xs font-bold text-zinc-400 hover:text-white bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-lg transition-colors">⚙️ Settings</button>
                 ) : (
@@ -235,7 +243,6 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
                 )}
               </div>
               
-              {/* Contadores */}
               <div className="flex gap-5 justify-center md:justify-start mb-4 text-sm">
                 <div><span className="font-bold text-white">{followersCount}</span> <span className="text-zinc-400">followers</span></div>
                 <div><span className="font-bold text-white">{followingCount}</span> <span className="text-zinc-400">following</span></div>
@@ -257,15 +264,14 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
         <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center"><span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Avg Rating</span><span className="text-3xl font-black text-yellow-500 flex items-center gap-1">{stats.averageRating}<span className="text-xl pb-1">★</span></span></div>
       </div>
 
-      {/* MASTERPIECES */}
       {stats.favorites.length > 0 && (
         <div>
           <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 border-l-2 border-yellow-500 pl-3">Masterpieces</h3>
           <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
             {stats.favorites.map(game => (
-              <div key={game.id} className="rounded-xl overflow-hidden border border-zinc-800 relative group">
-                {game.cover?.url ? <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full aspect-[3/4] object-cover" /> : <div className="w-full aspect-[3/4] bg-zinc-800"></div>}
-                <div className="absolute inset-0 bg-zinc-950/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center"><span className="text-white text-xs font-bold line-clamp-2">{game.name}</span></div>
+              <div key={game.id} onClick={() => handleGameClick(game)} className="cursor-pointer rounded-xl overflow-hidden border border-zinc-800 relative group">
+                {game.cover?.url ? <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full aspect-[3/4] object-cover transition-transform group-hover:scale-105" /> : <div className="w-full aspect-[3/4] bg-zinc-800 transition-transform group-hover:scale-105"></div>}
+                <div className="absolute inset-0 bg-zinc-950/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center"><span className="text-white text-xs font-bold line-clamp-2">{game.name || game.game_name}</span></div>
               </div>
             ))}
           </div>
@@ -307,7 +313,7 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
                 {userLibrary.map((game) => (
-                  <div key={game.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex flex-col relative group">
+                  <div key={game.id} onClick={() => handleGameClick(game)} className="cursor-pointer bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex flex-col relative group transition-transform hover:scale-105">
                     <span className="absolute top-3 right-3 z-10 text-[9px] font-black bg-zinc-950/90 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded capitalize">{game.status.replace('_', ' ')}</span>
                     <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-950 mb-2">
                       {game.cover?.url ? <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full h-full object-cover" /> : null}
@@ -322,6 +328,15 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
           </div>
         )}
       </div>
+
+      {selectedGame && (
+        <GameModal 
+          game={selectedGame.game} 
+          userGame={selectedGame.userGame} 
+          onClose={() => setSelectedGame(null)} 
+          onRefresh={loadProfile} 
+        />
+      )}
 
     </div>
   )

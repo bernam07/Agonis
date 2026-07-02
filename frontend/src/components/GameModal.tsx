@@ -138,19 +138,47 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
             </div>
           </div>
         ) : (
-          <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
+          <div className="space-y-6 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
             {game.summary && (
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Summary</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Summary</h4>
                 <p className="text-zinc-300 text-sm leading-relaxed font-medium">{game.summary}</p>
               </div>
             )}
+            
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Get this game</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <a 
+                  href={`https://store.steampowered.com/search/?term=${encodeURIComponent(game.name)}`} 
+                  target="_blank" rel="noreferrer"
+                  className="bg-[#171a21] hover:bg-[#2a475e] text-white text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors border border-[#2a475e]"
+                >
+                  Steam
+                </a>
+                <a 
+                  href={`https://store.playstation.com/search/${encodeURIComponent(game.name)}`} 
+                  target="_blank" rel="noreferrer"
+                  className="bg-[#00439c] hover:bg-[#0070d1] text-white text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors border border-[#0070d1]"
+                >
+                  PlayStation
+                </a>
+                <a 
+                  href={`https://www.instant-gaming.com/en/search/?q=${encodeURIComponent(game.name)}`} 
+                  target="_blank" rel="noreferrer"
+                  className="bg-[#ff6000] hover:bg-[#ff7b2b] text-white text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors border border-[#ff7b2b] col-span-2"
+                >
+                  Find deals on Instant Gaming
+                </a>
+              </div>
+            </div>
+
             {game.platforms && (
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Platforms</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Platforms</h4>
                 <div className="flex flex-wrap gap-1.5">
                   {game.platforms.map((p: any) => (
-                    <span key={p.id} className="text-xs bg-zinc-950 border border-zinc-800 text-zinc-400 px-2.5 py-1 rounded-md font-medium">{p.name}</span>
+                    <span key={p.id} className="text-xs bg-zinc-950 border border-zinc-800 text-zinc-400 px-2.5 py-1.5 rounded-md font-medium">{p.name}</span>
                   ))}
                 </div>
               </div>

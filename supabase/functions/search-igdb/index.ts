@@ -23,7 +23,7 @@ serve(async (req) => {
       .from('games_cache')
       .select('*')
       .ilike('name', `%${searchQuery}%`)
-      .limit(10)
+      .limit(50)
 
     if (cachedGames && cachedGames.length >= 5) {
       return new Response(JSON.stringify(cachedGames), {
@@ -32,8 +32,8 @@ serve(async (req) => {
       })
     }
 
-    const clientId = Deno.env.get('IGDB_CLIENT_ID')
-    const clientSecret = Deno.env.get('IGDB_CLIENT_SECRET')
+    const clientId = Deno.env.get('TWITCH_CLIENT_ID')
+    const clientSecret = Deno.env.get('TWITCH_CLIENT_SECRET')
 
     const tokenResponse = await fetch(
       `https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`,
@@ -49,7 +49,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'text/plain',
       },
-      body: `search "${searchQuery}"; fields name, cover.url, summary, platforms.name; limit 15;`
+      body: `search "${searchQuery}"; fields name, cover.url, summary, platforms.name; limit 50;`
     })
 
     const igdbData = await igdbResponse.json()

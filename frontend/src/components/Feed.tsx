@@ -78,21 +78,26 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
     fetchPosts(currentUser.id)
   }
 
-  const toggleLike = async (postId: string, hasLiked: boolean) => {
-    if (!currentUser) return
-
-    setPosts(posts.map(p => {
-      if (p.id === postId) {
-        return { ...p, hasLiked: !hasLiked, likesCount: hasLiked ? p.likesCount - 1 : p.likesCount + 1 }
-      }
-      return p
-    }))
+  const toggleLike = async (postId: string, authorId: string, hasLiked: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
     if (hasLiked) {
-      await supabase.from('likes').delete().match({ post_id: postId, user_id: currentUser.id })
+      await supabase.from('likes').delete().match({ post_id: postId, user_id: user.id })
     } else {
-      await supabase.from('likes').insert([{ post_id: postId, user_id: currentUser.id }])
+      await supabase.from('likes').insert({ post_id: postId, user_id: user.id })
+      
+      if (user.id !== authorId) {
+        await supabase.from('notifications').insert({
+          receiver_id: authorId,
+          actor_id: user.id,
+          type: 'like',
+          post_id: postId
+        })
+      }
     }
+    
+    fetchPosts(user.id)
   }
 
   return (
@@ -181,7 +186,7 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
             {/* BOTÃO DE LIKE */}
             <div className="flex items-center gap-4 pt-3 border-t border-zinc-800/50">
               <button 
-                onClick={() => toggleLike(post.id, post.hasLiked)}
+                onClick={() => toggleLike(post.id, post.profiles.id, post.hasLiked)}
                 className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
                   post.hasLiked ? 'text-rose-500 hover:text-rose-400' : 'text-zinc-500 hover:text-rose-400'
                 }`}

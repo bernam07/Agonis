@@ -41,9 +41,23 @@ export default function GameSearch() {
     e.preventDefault()
     if (!query.trim()) return loadRecommendations()
     setLoading(true)
-    const { data, error } = await supabase.functions.invoke('search-igdb', { body: { searchQuery: query } })
-    if (!error) setResults(data)
-    setLoading(false)
+    const { data, error } = await supabase.functions.invoke('search-igdb', {
+      body: { searchQuery: query }
+    })
+
+    if (error) {
+      console.error(error)
+      setResults([])
+      setLoading(false)
+      return
+    }
+
+    if (Array.isArray(data)) {
+      setResults(data)
+    } else {
+      console.error("Erro da API:", data)
+      setResults([])
+    }
   }
 
   return (
@@ -68,7 +82,7 @@ export default function GameSearch() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-        {results.map((game) => (
+        {Array.isArray(results) && results.map((game) => (
           <div 
             key={game.id} 
             onClick={() => setSelectedGame(game)} 

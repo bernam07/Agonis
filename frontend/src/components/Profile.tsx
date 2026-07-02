@@ -99,6 +99,13 @@ export default function Profile({ userId, onBack }: { userId?: string | null, on
       setIsFollowing(false)
     } else {
       await supabase.from('follows').insert([{ follower_id: user.id, following_id: profile.id }])
+      
+      await supabase.from('notifications').insert([{
+        receiver_id: profile.id,
+        actor_id: user.id,
+        type: 'follow'
+      }])
+      
       setFollowersCount(prev => prev + 1)
       setIsFollowing(true)
     }

@@ -21,10 +21,13 @@ import Auth from './components/Auth'
 import MyLibrary from './components/MyLibrary'
 import Feed from './components/Feed'
 import Profile from './components/Profile'
+import Footer from './components/Footer'
+import PrivacyPolicy from './components/PrivacyPolicy'
+import Notifications from './components/Notifications'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'feed' | 'search' | 'library' | 'profile'>('feed')
+  const [activeTab, setActiveTab] = useState<'feed' | 'search' | 'library' | 'profile' | 'policy'>('feed')
   const [globalLibrary, setGlobalLibrary] = useState<any[]>([])
   
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
@@ -61,13 +64,17 @@ export default function App() {
             <button onClick={() => { setActiveTab('search'); setViewedUserId(null); }} className={navItemClass('search')}>Discover</button>
             <button onClick={() => { setActiveTab('library'); setViewedUserId(null); }} className={navItemClass('library')}>Library</button>
             <button onClick={() => { setActiveTab('profile'); setViewedUserId(null); }} className={navItemClass('profile')}>Profile</button>
-            <div className="w-px h-4 bg-zinc-800 mx-3"></div>
-            <button onClick={() => supabase.auth.signOut()} className="text-xs font-semibold text-rose-500 hover:text-rose-400 px-3 py-2">Log out</button>
+            
+            <div className="w-px h-4 bg-zinc-800 mx-2"></div>
+            
+            <Notifications onUserClick={goToProfile} />
+            
+            <button onClick={() => supabase.auth.signOut()} className="text-xs font-semibold text-rose-500 hover:text-rose-400 px-3 py-2 ml-1">Log out</button>
           </div>
         </div>
       </nav>
       
-      <main className="max-w-5xl mx-auto px-4">
+      <main className="max-w-5xl mx-auto px-4 flex-1">
         {activeTab === 'feed' && <Feed library={globalLibrary} onUserClick={goToProfile} />}
         {activeTab === 'search' && <GameSearch />}
         {activeTab === 'library' && <MyLibrary library={globalLibrary} setLibrary={setGlobalLibrary} />}
@@ -77,7 +84,10 @@ export default function App() {
             onBack={() => { setActiveTab('feed'); setViewedUserId(null); }} 
           />
         )}
+        {activeTab === 'policy' && <PrivacyPolicy />}
       </main>
+
+      <Footer onNavigate={(tab) => { setActiveTab(tab as any); setViewedUserId(null); }} />
     </div>
   )
 }

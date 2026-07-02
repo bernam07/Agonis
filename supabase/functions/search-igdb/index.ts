@@ -1,49 +1,79 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-// Retrieve the secure variables
-const TWITCH_CLIENT_ID = Deno.env.get('TWITCH_CLIENT_ID')!
-const TWITCH_CLIENT_SECRET = Deno.env.get('TWITCH_CLIENT_SECRET')!
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  // Allow Cross-Origin Requests (CORS) so your web app can call this
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
-  if (req.method === 'OPTIONS') return new Response('ok', { headers })
 
   try {
-    // Get the search term from the incoming request
     const { searchQuery } = await req.json()
+    
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    // 1. Authenticate with Twitch to get a temporary Access Token
-    const tokenRes = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_CLIENT_SECRET}&grant_type=client_credentials`, {
-      method: 'POST',
-    })
-    const tokenData = await tokenRes.json()
+    const { data: cachedGames } = await supabaseClient
+      .from('games_cache')
+      .select('*')
+      .ilike('name', `%${searchQuery}%`)
+      .limit(10)
+
+    if (cachedGames && cachedGames.length >= 5) {
+      return new Response(JSON.stringify(cachedGames), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    const clientId = Deno.env.get('IGDB_CLIENT_ID')
+    const clientSecret = Deno.env.get('IGDB_CLIENT_SECRET')
+
+    const tokenResponse = await fetch(
+      `https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`,
+      { method: 'POST' }
+    )
+    const tokenData = await tokenResponse.json()
     const accessToken = tokenData.access_token
 
-    // 2. Query IGDB using the unique Apicalypse syntax
-    const igdbRes = await fetch('https://api.igdb.com/v4/games', {
+    const igdbResponse = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers: {
-        'Client-ID': TWITCH_CLIENT_ID,
+        'Client-ID': clientId ?? '',
         'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
+        'Content-Type': 'text/plain',
       },
-      body: `search "${searchQuery}"; fields name, cover.url, first_release_date, platforms.name; limit 10;`
+      body: `search "${searchQuery}"; fields name, cover.url, summary, platforms.name; limit 15;`
     })
-    
-    const games = await igdbRes.json()
 
-    // Return the clean JSON to Agonis
-    return new Response(JSON.stringify(games), {
-      headers: { ...headers, 'Content-Type': 'application/json' },
+    const igdbData = await igdbResponse.json()
+
+    if (Array.isArray(igdbData)) {
+      for (const game of igdbData) {
+        await supabaseClient.from('games_cache').upsert({
+          id: game.id,
+          name: game.name,
+          cover: game.cover ?? null,
+          summary: game.summary ?? null,
+          platforms: game.platforms ?? null
+        }, { onConflict: 'id' })
+      }
+    }
+
+    return new Response(JSON.stringify(igdbData), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
-  } catch (error) {
+
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     })
   }

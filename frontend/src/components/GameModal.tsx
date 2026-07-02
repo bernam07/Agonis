@@ -16,6 +16,7 @@
 
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import ShareModal from './ShareModal'
 
 const STATUSES = [
   { id: 'backlog', label: 'Backlog' },
@@ -31,6 +32,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
   const [review, setReview] = useState(userGame?.review || '')
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'track' | 'details'>('track')
+  const [showShare, setShowShare] = useState(false)
 
   const saveGame = async () => {
     setLoading(true)
@@ -156,7 +158,18 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-4 border-t border-zinc-800 mt-6">
+        {userGame && (
+          <div className="mt-6 pt-4 border-t border-zinc-800">
+            <button 
+              onClick={() => setShowShare(true)}
+              className="w-full bg-zinc-950 border border-zinc-800 hover:border-indigo-500 text-zinc-300 hover:text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              Export Review Card
+            </button>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center mt-4">
           <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors">
             Close
           </button>
@@ -173,6 +186,10 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
         </div>
 
       </div>
+
+      {showShare && (
+        <ShareModal game={game} userGame={userGame} onClose={() => setShowShare(false)} />
+      )}
     </div>
   )
 }

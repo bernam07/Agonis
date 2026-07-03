@@ -38,37 +38,34 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
   const [screenshots, setScreenshots] = useState<any[]>([])
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
 
-  // Novos Estados (Fase 2)
-  const [hltbData, setHltbData] = useState<any>(null)
-  const [hltbLoading, setHltbLoading] = useState(false)
-  const [trailerId, setTrailerId] = useState<string | null>(null)
+  const [fullGameDetails, setFullGameDetails] = useState<any>(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
 
   useEffect(() => {
     loadScreenshots()
-    
-    // Identificar o Trailer (procura o primeiro video_id do YouTube vindo do IGDB)
-    if (game.videos && game.videos.length > 0) {
-      const video = game.videos.find((v: any) => v.video_id)
-      if (video) setTrailerId(video.video_id)
-    }
-
-    // Buscar dados do HowLongToBeat
-    fetchHLTBData()
+    fetchGameDetails()
   }, [])
 
-  const fetchHLTBData = async () => {
-    setHltbLoading(true)
+  const fetchGameDetails = async () => {
+    const gameId = game.id || game.igdb_id
+    if (!gameId) return
+
+    if (game.summary) {
+      setFullGameDetails(game)
+      return
+    }
+
+    setDetailsLoading(true)
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-hltb', {
-        body: { gameName: game.name || game.game_name }
+      const { data } = await supabase.functions.invoke('fetch-games', {
+        body: { gameIds: [gameId] }
       })
-      if (data && !error) {
-        setHltbData(data)
+      if (data && data.length > 0) {
+        setFullGameDetails(data[0])
       }
     } catch (err) {
-      console.error("Erro a carregar HLTB:", err)
     } finally {
-      setHltbLoading(false)
+      setDetailsLoading(false)
     }
   }
 
@@ -111,7 +108,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
 
       loadScreenshots()
     } catch (error: any) {
-      alert('Error uploading screenshot: ' + error.message)
+      alert(error.message)
     } finally {
       setUploadingScreenshot(false)
     }
@@ -149,18 +146,20 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
     onClose()
   }
 
+  const displayGame = fullGameDetails || game
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md overflow-y-auto">
       <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-zinc-100 my-8 shadow-2xl relative">
         
         <div className="flex gap-5 mb-6">
           <div className="w-28 aspect-[3/4] bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shrink-0 shadow-lg">
-            {game.cover?.url && (
-              <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full h-full object-cover" />
+            {displayGame.cover?.url && (
+              <img src={displayGame.cover.url.replace('t_thumb', 't_cover_big')} alt={displayGame.name} className="w-full h-full object-cover" />
             )}
           </div>
           <div className="flex flex-col justify-center">
-            <h2 className="text-2xl font-black text-white mb-2 leading-tight">{game.name || game.game_name}</h2>
+            <h2 className="text-2xl font-black text-white mb-2 leading-tight">{displayGame.name || displayGame.game_name}</h2>
             <div className="flex gap-1 mb-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button 
@@ -223,86 +222,41 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
 
           {activeTab === 'details' && (
             <div className="space-y-8 pb-4">
-              
-              {/* HOWLONGTOBEAT SECTION */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Playtime</h4>
-                  <div className="h-px flex-1 bg-zinc-800"></div>
-                </div>
-                {hltbLoading ? (
-                  <div className="text-zinc-500 text-xs font-bold text-center py-4 animate-pulse">Calculating time to beat...</div>
-                ) : hltbData ? (
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex flex-col items-center text-center">
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase mb-1">Main Story</span>
-                      <span className="text-xl font-black text-indigo-400">{hltbData.gameplayMain}h</span>
+              {detailsLoading ? (
+                <div className="text-zinc-500 text-xs font-bold text-center py-8 animate-pulse">Loading game details...</div>
+              ) : (
+                <>
+                  {displayGame.summary && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">About</h4>
+                        <div className="h-px flex-1 bg-zinc-800"></div>
+                      </div>
+                      <p className="text-zinc-300 text-sm leading-relaxed font-medium bg-zinc-950 p-4 rounded-xl border border-zinc-800">{displayGame.summary}</p>
                     </div>
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex flex-col items-center text-center">
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase mb-1">Main + Sides</span>
-                      <span className="text-xl font-black text-indigo-400">{hltbData.gameplayMainExtra}h</span>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {displayGame.platforms && displayGame.platforms.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Platforms</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {displayGame.platforms.map((p: any) => (
+                            <span key={p.id} className="text-[11px] bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-lg font-bold shadow-sm">{p.name}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Get this game</h4>
+                      <div className="flex gap-2">
+                        <a href={`https://store.steampowered.com/search/?term=${encodeURIComponent(displayGame.name || displayGame.game_name)}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#171a21] hover:bg-[#2a475e] text-white text-xs font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors">Steam</a>
+                        <a href={`https://store.playstation.com/search/${encodeURIComponent(displayGame.name || displayGame.game_name)}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#00439c] hover:bg-[#0070d1] text-white text-xs font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors">PlayStation</a>
+                      </div>
                     </div>
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex flex-col items-center text-center">
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase mb-1">Completionist</span>
-                      <span className="text-xl font-black text-rose-400">{hltbData.gameplayCompletionist}h</span>
-                    </div>
                   </div>
-                ) : (
-                  <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-center text-xs text-zinc-500 font-medium">
-                    Playtime data not available for this title.
-                  </div>
-                )}
-              </div>
-
-              {/* TRAILER SECTION */}
-              {trailerId && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Trailer</h4>
-                    <div className="h-px flex-1 bg-zinc-800"></div>
-                  </div>
-                  <div className="aspect-video w-full rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-lg">
-                    <iframe 
-                      src={`https://www.youtube.com/embed/${trailerId}?modestbranding=1&rel=0`}
-                      title="Game Trailer"
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen
-                    ></iframe>
-                  </div>
-                </div>
+                </>
               )}
-
-              {/* SUMMARY SECTION */}
-              {game.summary && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">About</h4>
-                    <div className="h-px flex-1 bg-zinc-800"></div>
-                  </div>
-                  <p className="text-zinc-300 text-sm leading-relaxed font-medium bg-zinc-950 p-4 rounded-xl border border-zinc-800">{game.summary}</p>
-                </div>
-              )}
-              
-              {/* PLATFORMS & STORE LINKS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Platforms</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {game.platforms?.map((p: any) => (
-                      <span key={p.id} className="text-[11px] bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-lg font-bold shadow-sm">{p.name}</span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Get this game</h4>
-                  <div className="flex gap-2">
-                    <a href={`https://store.steampowered.com/search/?term=${encodeURIComponent(game.name || game.game_name)}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#171a21] hover:bg-[#2a475e] text-white text-xs font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors">Steam</a>
-                    <a href={`https://store.playstation.com/search/${encodeURIComponent(game.name || game.game_name)}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#00439c] hover:bg-[#0070d1] text-white text-xs font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors">PlayStation</a>
-                  </div>
-                </div>
-              </div>
-
             </div>
           )}
 
@@ -339,7 +293,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
               onClick={() => setShowShare(true)}
               className="w-full bg-indigo-950/30 border border-indigo-500/30 hover:border-indigo-500 text-indigo-300 hover:text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
             >
-              📷 Export Review Card
+              Export Review Card
             </button>
           </div>
         )}
@@ -363,7 +317,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
       </div>
 
       {showShare && (
-        <ShareModal game={game} userGame={userGame} onClose={() => setShowShare(false)} />
+        <ShareModal game={displayGame} userGame={userGame} onClose={() => setShowShare(false)} />
       )}
     </div>
   )

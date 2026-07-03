@@ -59,7 +59,7 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
       .order('created_at', { ascending: false })
     
     if (error) {
-      console.error("Erro a carregar o Feed:", error)
+      console.error(error)
       return
     }
     
@@ -93,7 +93,6 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
         const { data } = supabase.storage.from('screenshots').getPublicUrl(filePath)
         finalImageUrl = data.publicUrl
       } else {
-        console.error("Upload error:", uploadError)
         alert("Failed to upload image.")
         setLoading(false)
         setUploading(false)
@@ -236,6 +235,36 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
     setExpandedComments(prev => ({ ...prev, [postId]: !prev[postId] }))
   }
 
+  const handleMentionClick = async (mentionStr: string) => {
+    const username = mentionStr.replace('@', '')
+    const { data } = await supabase.from('profiles').select('id').eq('username', username).single()
+    if (data) {
+      onUserClick(data.id)
+    }
+  }
+
+  const renderContent = (text: string) => {
+    if (!text) return null
+    const parts = text.split(/(@\w+)/g)
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        return (
+          <span 
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleMentionClick(part)
+            }}
+            className="text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer transition-colors"
+          >
+            {part}
+          </span>
+        )
+      }
+      return <span key={index}>{part}</span>
+    })
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8 bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-sm">
@@ -285,7 +314,7 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
               </button>
               
               <label className="text-xs font-bold text-zinc-400 hover:text-indigo-400 bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-indigo-500 transition-colors cursor-pointer flex items-center gap-2">
-                📷 Image
+                Image
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && setImageFile(e.target.files[0])} />
               </label>
             </div>
@@ -341,7 +370,7 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
 
             {post.content && (
               <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-medium mb-4">
-                {post.content}
+                {renderContent(post.content)}
               </p>
             )}
 
@@ -367,7 +396,7 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
                   onClick={() => toggleCommentsVisibility(post.id)}
                   className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors"
                 >
-                  <span className="text-base leading-none">💬</span>
+                  <span className="text-base leading-none"></span>
                   <span>{post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}</span>
                 </button>
               </div>
@@ -397,7 +426,7 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
                             <span className="text-xs font-bold text-zinc-200 cursor-pointer hover:text-indigo-400 transition-colors" onClick={() => onUserClick(comment.profiles.id)}>@{comment.profiles?.username}</span>
                             <span className="text-[9px] text-zinc-600 font-medium">{new Date(comment.created_at).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
-                          <p className="text-xs text-zinc-300 mt-0.5 whitespace-pre-wrap font-medium">{comment.content}</p>
+                          <p className="text-xs text-zinc-300 mt-0.5 whitespace-pre-wrap font-medium">{renderContent(comment.content)}</p>
                         </div>
                       </div>
                     ))

@@ -27,7 +27,7 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   
-  const [viewMode, setViewMode] = useState<'activity' | 'library'>('activity')
+  const [viewMode, setViewMode] = useState<'activity' | 'library' | 'lists'>('activity')
   
   const [editUsername, setEditUsername] = useState('')
   const [editBio, setEditBio] = useState('')
@@ -42,6 +42,13 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
 
   const [selectedGame, setSelectedGame] = useState<any>(null)
   const [followModalData, setFollowModalData] = useState<{title: string, users: any[]} | null>(null)
+
+  const [lists, setLists] = useState<any[]>([])
+  const [listName, setListName] = useState('')
+  const [listDesc, setListDesc] = useState('')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [expandedListId, setExpandedListId] = useState<string | null>(null)
+  const [listGames, setListGames] = useState<any[]>([])
 
   useEffect(() => {
     loadProfile()
@@ -81,6 +88,8 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
     const { data: postsData } = await supabase.from('posts').select('*').eq('user_id', targetId).order('created_at', { ascending: false })
     if (postsData) setMyPosts(postsData)
 
+    fetchUserLists(targetId)
+
     const { data: gamesData } = await supabase.from('user_games').select('*').eq('user_id', targetId)
     if (gamesData && gamesData.length > 0) {
       const { data: igdbGames } = await supabase.functions.invoke('fetch-games', { body: { gameIds: gamesData.map(g => g.igdb_id) } })
@@ -91,6 +100,15 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
     } else setUserLibrary([])
     
     setLoading(false)
+  }
+
+  const fetchUserLists = async (uid: string) => {
+    const { data } = await supabase
+      .from('lists')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+    if (data) setLists(data)
   }
 
   const handleGameClick = (userGame: any) => {
@@ -192,6 +210,60 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
       setProfile({ ...profile, ...updates })
       setIsEditing(false)
     }
+  }
+
+  const handleCreateList = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!listName.trim() || !isCurrentUser) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase.from('lists').insert([{
+      user_id: user.id,
+      name: listName.trim(),
+      description: listDesc.trim(),
+      is_public: true
+    }]).select().single()
+
+    if (data) {
+      setListName('')
+      setListDesc('')
+      setShowCreateForm(false)
+      fetchUserLists(user.id)
+    }
+  }
+
+  const handleDeleteList = async (id: string) => {
+    if (!window.confirm("Delete this list?")) return
+    await supabase.from('lists').delete().eq('id', id)
+    if (profile?.id) fetchUserLists(profile.id)
+    if (expandedListId === id) setExpandedListId(null)
+  }
+
+  const toggleListExpansion = async (listId: string) => {
+    if (expandedListId === listId) {
+      setExpandedListId(null)
+      setListGames([])
+      return
+    }
+
+    setExpandedListId(listId)
+    const { data } = await supabase
+      .from('list_games')
+      .select('*')
+      .eq('list_id', listId)
+      .order('created_at', { ascending: true })
+    if (data) setListGames(data)
+  }
+
+  const handleRemoveGameFromList = async (gameId: string, listId: string) => {
+    await supabase.from('list_games').delete().eq('id', gameId)
+    const { data } = await supabase
+      .from('list_games')
+      .select('*')
+      .eq('list_id', listId)
+      .order('created_at', { ascending: true })
+    if (data) setListGames(data)
   }
 
   const stats = useMemo(() => {
@@ -332,9 +404,10 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
           )}
 
           <div>
-            <div className="flex gap-4 border-b border-zinc-800 mb-6 mt-8">
-              <button onClick={() => setViewMode('activity')} className={`pb-2 text-sm font-bold transition-colors ${viewMode === 'activity' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Feed Activity</button>
-              <button onClick={() => setViewMode('library')} className={`pb-2 text-sm font-bold transition-colors ${viewMode === 'library' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Game Collection</button>
+            <div className="flex gap-4 border-b border-zinc-800 mb-6 mt-8 overflow-x-auto custom-scrollbar">
+              <button onClick={() => setViewMode('activity')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'activity' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Feed Activity</button>
+              <button onClick={() => setViewMode('library')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'library' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Game Collection</button>
+              <button onClick={() => setViewMode('lists')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'lists' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Custom Lists ({lists.length})</button>
             </div>
 
             {viewMode === 'activity' && (
@@ -374,6 +447,93 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
                         <div className="flex justify-center text-amber-400 text-[10px] mt-auto">
                           {'★'.repeat(game.rating || 0)}{'☆'.repeat(5 - (game.rating || 0))}
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {viewMode === 'lists' && (
+              <div className="space-y-4">
+                {isCurrentUser && (
+                  <div className="mb-6">
+                    {!showCreateForm ? (
+                      <button onClick={() => setShowCreateForm(true)} className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors">
+                        + Create Custom List
+                      </button>
+                    ) : (
+                      <form onSubmit={handleCreateList} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4 max-w-md">
+                        <div>
+                          <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-1.5">List Name</label>
+                          <input type="text" value={listName} onChange={(e) => setListName(e.target.value)} placeholder="e.g., My Top 10 RPGs" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-100 outline-none focus:border-indigo-500 transition-colors font-medium" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-1.5">Description</label>
+                          <textarea value={listDesc} onChange={(e) => setListDesc(e.target.value)} placeholder="Optional details about this collection..." rows={3} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-100 outline-none focus:border-indigo-500 transition-colors font-medium resize-none" />
+                        </div>
+                        <div className="flex gap-2 justify-end pt-1">
+                          <button type="button" onClick={() => setShowCreateForm(false)} className="px-4 py-2 rounded-xl text-zinc-400 text-xs font-bold hover:text-zinc-200 transition-colors">Cancel</button>
+                          <button type="submit" disabled={!listName.trim()} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold px-5 py-2 rounded-xl transition-colors">Create List</button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+
+                {lists.length === 0 ? (
+                  <div className="text-center py-12 text-zinc-600 font-medium text-sm">No custom lists found.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {lists.map(list => (
+                      <div key={list.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden transition-colors hover:border-zinc-700">
+                        <div onClick={() => toggleListExpansion(list.id)} className="p-5 flex justify-between items-center cursor-pointer select-none">
+                          <div>
+                            <h3 className="font-bold text-sm text-zinc-100">{list.name}</h3>
+                            {list.description && <p className="text-xs text-zinc-500 font-medium mt-1">{list.description}</p>}
+                          </div>
+                          <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                            {isCurrentUser && (
+                              <button onClick={() => handleDeleteList(list.id)} className="text-zinc-600 hover:text-rose-500 transition-colors p-1 text-xs">
+                                🗑️
+                              </button>
+                            )}
+                            <span className="text-zinc-500 text-xs font-bold">{expandedListId === list.id ? '▼' : '▶'}</span>
+                          </div>
+                        </div>
+
+                        {expandedListId === list.id && (
+                          <div className="border-t border-zinc-800 bg-zinc-950/40 p-5">
+                            {listGames.length === 0 ? (
+                              <p className="text-xs text-zinc-600 font-medium py-2">This list is empty. You can add games from your library details.</p>
+                            ) : (
+                              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                                {listGames.map(g => (
+                                  <div key={g.id} className="relative group/game bg-zinc-900 border border-zinc-800/80 rounded-xl p-2 flex flex-col items-center">
+                                    <div 
+                                      className="aspect-[3/4] w-full rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800/40 cursor-pointer" 
+                                      onClick={() => {
+                                        const trackedGame = userLibrary.find(libGame => libGame.igdb_id === g.igdb_id);
+                                        setSelectedGame({ 
+                                          game: { id: g.igdb_id, name: g.game_name, cover: { url: g.game_cover } }, 
+                                          userGame: trackedGame || null 
+                                        });
+                                      }}
+                                    >
+                                      {g.game_cover && <img src={g.game_cover.replace('t_thumb', 't_cover_big')} alt={g.game_name} className="w-full h-full object-cover" />}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-zinc-400 mt-2 text-center line-clamp-1 px-1 w-full">{g.game_name}</span>
+                                    {isCurrentUser && (
+                                      <button onClick={() => handleRemoveGameFromList(g.id, list.id)} className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black opacity-0 group-hover/game:opacity-100 transition-opacity shadow-md">
+                                        ×
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

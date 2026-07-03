@@ -24,7 +24,18 @@ export default function MyLibrary({ library, setLibrary }: { library: any[], set
   const [filter, setFilter] = useState<string>('all')
 
   const fetchMyGames = async () => {
-    const { data: userGames } = await supabase.from('user_games').select('*')
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    const { data: userGames } = await supabase
+      .from('user_games')
+      .select('*')
+      .eq('user_id', user.id)
+
     if (!userGames || userGames.length === 0) {
       setLibrary([])
       setLoading(false)

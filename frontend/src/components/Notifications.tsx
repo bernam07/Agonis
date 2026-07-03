@@ -49,7 +49,21 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+  
+  const handleAcceptRequest = async (notif: any) => {
+    await supabase.from('follows').insert([{ follower_id: notif.profiles.id, following_id: notif.receiver_id }])
+    await supabase.from('follow_requests').delete().match({ sender_id: notif.profiles.id, receiver_id: notif.receiver_id })
+    await supabase.from('notifications').update({ type: 'follow', is_read: true }).eq('id', notif.id)
+    await supabase.from('notifications').insert([{ receiver_id: notif.profiles.id, actor_id: notif.receiver_id, type: 'follow_accepted' }])
+    fetchNotifications()
+  }
 
+  const handleRejectRequest = async (notif: any) => {
+    await supabase.from('follow_requests').delete().match({ sender_id: notif.profiles.id, receiver_id: notif.receiver_id })
+    await supabase.from('notifications').delete().eq('id', notif.id)
+    fetchNotifications()
+  }
+  
   const fetchNotifications = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -127,8 +141,31 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                   <div className="text-sm">
                     <span className="font-bold text-zinc-200">@{notif.profiles.username} </span>
                     <span className="text-zinc-400">
-                      {notif.type === 'like' ? 'liked your post.' : 'started following you.'}
+                      {notif.type === 'like' && 'liked your post.'}
+                      {notif.type === 'follow' && 'started following you.'}
+                      {notif.type === 'follow_request' && 'sent you a follow request.'}
+                      {notif.type === 'follow_accepted' && 'accepted your follow request.'}
+                      {notif.type === 'comment' && 'commented on your post.'}
+                      {notif.type === 'mention' && 'mentioned you in a post or comment.'}
                     </span>
+                    
+                    {notif.type === 'follow_request' && (
+                      <div className="flex gap-2 mt-2">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleAcceptRequest(notif); }} 
+                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-3 py-1 rounded-md transition-colors"
+                        >
+                          Accept
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleRejectRequest(notif); }} 
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold px-3 py-1 rounded-md transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+
                     <div className="text-[10px] text-zinc-500 mt-0.5">
                       {new Date(notif.created_at).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>

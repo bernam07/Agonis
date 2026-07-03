@@ -34,6 +34,7 @@ export default function Footer({ onNavigate }: { onNavigate: (tab: string) => vo
       </div>
 
       <div className="flex justify-center gap-6 text-xs font-bold text-zinc-500 mb-6">
+        <button onClick={() => onNavigate('faq')} className="hover:text-zinc-300 transition-colors">FAQ</button>
         <button onClick={() => onNavigate('policy')} className="hover:text-zinc-300 transition-colors">Privacy Policy</button>
         <a href="mailto:contact@agonis.gg" className="hover:text-zinc-300 transition-colors">Contact Us</a>
         <a href="https://github.com/bernam07/Agonis" target="_blank" rel="noreferrer" className="hover:text-zinc-300 transition-colors">GitHub</a>

@@ -25,11 +25,12 @@ import Footer from './components/Footer'
 import PrivacyPolicy from './components/PrivacyPolicy'
 import Notifications from './components/Notifications'
 import LandingPage from './components/LandingPage'
+import FAQ from './components/FAQ'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [showAuth, setShowAuth] = useState(false)
-  const [activeTab, setActiveTab] = useState<'feed' | 'search' | 'library' | 'profile' | 'policy'>('feed')
+  const [activeTab, setActiveTab] = useState<'feed' | 'search' | 'library' | 'profile' | 'policy' | 'faq'>('feed')
   const [globalLibrary, setGlobalLibrary] = useState<any[]>([])
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
   
@@ -47,7 +48,13 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (session) setShowAuth(false)
+      if (session) {
+        setShowAuth(false)
+      } else {
+        setGlobalLibrary([])
+        setActiveTab('feed')
+        setViewedUserId(null)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -105,9 +112,11 @@ export default function App() {
           <Profile 
             userId={viewedUserId} 
             onBack={() => { setActiveTab('feed'); setViewedUserId(null); }} 
+            onUserClick={goToProfile} 
           />
         )}
         {activeTab === 'policy' && <PrivacyPolicy />}
+        {activeTab === 'faq' && <FAQ />}
       </main>
 
       <Footer onNavigate={(tab) => { setActiveTab(tab as any); setViewedUserId(null); }} />

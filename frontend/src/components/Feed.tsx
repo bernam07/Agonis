@@ -16,6 +16,8 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import SharePostModal from './SharePostModal'
+import GameModal from './GameModal'
 
 export default function Feed({ library, onUserClick }: { library: any[], onUserClick: (id: string) => void }) {
   const [posts, setPosts] = useState<any[]>([])
@@ -25,6 +27,15 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
   
   const [selectedGame, setSelectedGame] = useState<any>(null)
   const [showPicker, setShowPicker] = useState(false)
+
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  
+  const [postToShare, setPostToShare] = useState<any>(null)
+  const [activeModalGame, setActiveModalGame] = useState<any>(null)
+
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -37,9 +48,13 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
     const { data, error } = await supabase
       .from('posts')
       .select(`
-        id, content, created_at, igdb_id, game_name, game_cover,
+        id, content, created_at, igdb_id, game_name, game_cover, image_url,
         profiles!posts_user_id_fkey (id, username, avatar_url),
-        likes (user_id)
+        likes (user_id),
+        comments (
+          id, content, created_at, user_id,
+          profiles!comments_user_id_fkey (id, username, avatar_url)
+        )
       `)
       .order('created_at', { ascending: false })
     
@@ -52,7 +67,9 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
       const processedPosts = data.map(post => ({
         ...post,
         likesCount: post.likes.length,
-        hasLiked: userId ? post.likes.some((like: any) => like.user_id === userId) : false
+        hasLiked: userId ? post.likes.some((like: any) => like.user_id === userId) : false,
+        commentsCount: post.comments?.length || 0,
+        comments: post.comments || []
       }))
       setPosts(processedPosts)
     }
@@ -60,21 +77,73 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
 
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!content.trim() || !currentUser) return
+    if ((!content.trim() && !imageFile) || !currentUser) return
     
     setLoading(true)
-    await supabase.from('posts').insert([{
+    setUploading(true)
+
+    let finalImageUrl = null
+
+    if (imageFile) {
+      const fileExt = imageFile.name.split('.').pop()
+      const filePath = `${currentUser.id}/${Date.now()}.${fileExt}`
+      
+      const { error: uploadError } = await supabase.storage.from('screenshots').upload(filePath, imageFile)
+      if (!uploadError) {
+        const { data } = supabase.storage.from('screenshots').getPublicUrl(filePath)
+        finalImageUrl = data.publicUrl
+      } else {
+        console.error("Upload error:", uploadError)
+        alert("Failed to upload image.")
+        setLoading(false)
+        setUploading(false)
+        return
+      }
+    }
+
+    const { data: newPost } = await supabase.from('posts').insert([{
       user_id: currentUser.id,
       content: content.trim(),
       igdb_id: selectedGame?.igdb_id || selectedGame?.id || null,
       game_name: selectedGame?.name || null,
-      game_cover: selectedGame?.cover?.url || null
-    }])
+      game_cover: selectedGame?.cover?.url || null,
+      image_url: finalImageUrl
+    }]).select().single()
+
+    if (newPost) {
+      if (finalImageUrl && selectedGame) {
+        await supabase.from('game_screenshots').insert([{
+          user_id: currentUser.id,
+          igdb_id: selectedGame.igdb_id || selectedGame.id,
+          url: finalImageUrl
+        }])
+      }
+
+      const matches = [...content.trim().matchAll(/@(\w+)/g)].map(m => m[1])
+      if (matches.length > 0) {
+        const { data: users } = await supabase.from('profiles').select('id').in('username', matches)
+        if (users) {
+          const mentionNotifs = users
+            .filter(u => u.id !== currentUser.id)
+            .map(u => ({
+              receiver_id: u.id,
+              actor_id: currentUser.id,
+              type: 'mention',
+              post_id: newPost.id
+            }))
+          if (mentionNotifs.length > 0) {
+            await supabase.from('notifications').insert(mentionNotifs)
+          }
+        }
+      }
+    }
     
     setContent('')
     setSelectedGame(null)
     setShowPicker(false)
+    setImageFile(null)
     setLoading(false)
+    setUploading(false)
     fetchPosts(currentUser.id)
   }
 
@@ -100,9 +169,75 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
     fetchPosts(user.id)
   }
 
+  const deletePost = async (postId: string) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return
+    await supabase.from('posts').delete().eq('id', postId)
+    if (currentUser) fetchPosts(currentUser.id)
+  }
+
+  const handleGameClick = (post: any) => {
+    const trackedGame = library.find(g => (g.igdb_id || g.id) === post.igdb_id)
+    
+    setActiveModalGame({
+      game: {
+        id: post.igdb_id,
+        name: post.game_name,
+        cover: { url: post.game_cover }
+      },
+      userGame: trackedGame || null
+    })
+  }
+
+  const handleAddComment = async (e: React.FormEvent, postId: string, postAuthorId: string) => {
+    e.preventDefault()
+    const commentText = commentInputs[postId]?.trim()
+    if (!commentText || !currentUser) return
+
+    const { data: newComment } = await supabase.from('comments').insert([{
+      post_id: postId,
+      user_id: currentUser.id,
+      content: commentText
+    }]).select().single()
+
+    if (newComment) {
+      if (currentUser.id !== postAuthorId) {
+        await supabase.from('notifications').insert([{
+          receiver_id: postAuthorId,
+          actor_id: currentUser.id,
+          type: 'comment',
+          post_id: postId
+        }])
+      }
+
+      const matches = [...commentText.matchAll(/@(\w+)/g)].map(m => m[1])
+      if (matches.length > 0) {
+        const { data: users } = await supabase.from('profiles').select('id').in('username', matches)
+        if (users) {
+          const mentionNotifs = users
+            .filter(u => u.id !== currentUser.id && u.id !== postAuthorId)
+            .map(u => ({
+              receiver_id: u.id,
+              actor_id: currentUser.id,
+              type: 'mention',
+              post_id: postId
+            }))
+          if (mentionNotifs.length > 0) {
+            await supabase.from('notifications').insert(mentionNotifs)
+          }
+        }
+      }
+
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }))
+      fetchPosts(currentUser.id)
+    }
+  }
+
+  const toggleCommentsVisibility = (postId: string) => {
+    setExpandedComments(prev => ({ ...prev, [postId]: !prev[postId] }))
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
-      {/* CAIXA DE POST */}
       <div className="mb-8 bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-sm">
         <form onSubmit={createPost} className="flex flex-col gap-3">
           {selectedGame && (
@@ -113,9 +248,17 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
             </div>
           )}
           <textarea
-            value={content} onChange={(e) => setContent(e.target.value)} placeholder="What are you playing? Share your thoughts..." rows={3}
+            value={content} onChange={(e) => setContent(e.target.value)} placeholder="What are you playing? Share your thoughts or screenshots..." rows={3}
             className="w-full bg-transparent text-zinc-100 placeholder-zinc-600 outline-none resize-none text-sm font-medium mt-1"
           />
+
+          {imageFile && (
+            <div className="relative inline-block w-max mt-2">
+              <img src={URL.createObjectURL(imageFile)} alt="Preview" className="h-32 rounded-lg border border-zinc-800 object-cover" />
+              <button type="button" onClick={() => setImageFile(null)} className="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-lg transition-colors">×</button>
+            </div>
+          )}
+
           {showPicker && (
             <div className="mt-2 p-4 bg-zinc-950 border border-zinc-800 rounded-2xl">
               {library.length === 0 ? (
@@ -134,18 +277,26 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
               )}
             </div>
           )}
+
           <div className="flex justify-between items-center pt-3 border-t border-zinc-800/50 mt-2">
-            <button type="button" onClick={() => setShowPicker(!showPicker)} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${showPicker ? 'bg-zinc-800 text-zinc-200 border-zinc-700' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-300 hover:border-zinc-700'}`}>
-              + Tag Game
-            </button>
-            <button type="submit" disabled={loading || !content.trim()} className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-2 rounded-xl transition-colors disabled:opacity-50">
-              Post
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={() => setShowPicker(!showPicker)} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${showPicker ? 'bg-zinc-800 text-zinc-200 border-zinc-700' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-300 hover:border-zinc-700'}`}>
+                + Tag Game
+              </button>
+              
+              <label className="text-xs font-bold text-zinc-400 hover:text-indigo-400 bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-indigo-500 transition-colors cursor-pointer flex items-center gap-2">
+                📷 Image
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && setImageFile(e.target.files[0])} />
+              </label>
+            </div>
+
+            <button type="submit" disabled={loading || uploading || (!content.trim() && !imageFile)} className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-2 rounded-xl transition-colors disabled:opacity-50">
+              {uploading ? 'Posting...' : 'Post'}
             </button>
           </div>
         </form>
       </div>
 
-      {/* LISTA DE POSTS */}
       <div className="flex flex-col gap-5">
         {posts.map(post => (
           <div key={post.id} className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 transition-colors hover:border-zinc-700">
@@ -170,34 +321,119 @@ export default function Feed({ library, onUserClick }: { library: any[], onUserC
                   </div>
                 </div>
               </div>
+              
+              {currentUser?.id === post.profiles.id && (
+                <button onClick={() => deletePost(post.id)} className="text-zinc-600 hover:text-rose-500 transition-colors p-1" title="Delete Post">
+                  🗑️
+                </button>
+              )}
             </div>
 
             {post.game_name && (
-              <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 w-max pr-4">
+              <div 
+                onClick={() => handleGameClick(post)}
+                className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 w-max pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
+              >
                 {post.game_cover && <img src={post.game_cover.replace('t_thumb', 't_cover_small')} alt={post.game_name} className="w-8 h-10 object-cover rounded-md" />}
-                <span className="text-xs font-bold text-indigo-400">{post.game_name}</span>
+                <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors">{post.game_name}</span>
               </div>
             )}
 
-            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-medium mb-4">
-              {post.content}
-            </p>
+            {post.content && (
+              <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-medium mb-4">
+                {post.content}
+              </p>
+            )}
 
-            {/* BOTÃO DE LIKE */}
-            <div className="flex items-center gap-4 pt-3 border-t border-zinc-800/50">
-              <button 
-                onClick={() => toggleLike(post.id, post.profiles.id, post.hasLiked)}
-                className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
-                  post.hasLiked ? 'text-rose-500 hover:text-rose-400' : 'text-zinc-500 hover:text-rose-400'
-                }`}
-              >
-                <span className="text-lg leading-none">{post.hasLiked ? '♥' : '♡'}</span>
-                <span>{post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}</span>
+            {post.image_url && (
+              <div className="mb-4 rounded-xl overflow-hidden border border-zinc-800/50">
+                <img src={post.image_url} alt="Post attachment" className="w-full max-h-96 object-cover" />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-800/50">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => toggleLike(post.id, post.profiles.id, post.hasLiked)}
+                  className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
+                    post.hasLiked ? 'text-rose-500 hover:text-rose-400' : 'text-zinc-500 hover:text-rose-400'
+                  }`}
+                >
+                  <span className="text-lg leading-none">{post.hasLiked ? '♥' : '♡'}</span>
+                  <span>{post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}</span>
+                </button>
+
+                <button 
+                  onClick={() => toggleCommentsVisibility(post.id)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors"
+                >
+                  <span className="text-base leading-none">💬</span>
+                  <span>{post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}</span>
+                </button>
+              </div>
+              
+              <button onClick={() => setPostToShare(post)} className="text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+                ➦ Share
               </button>
             </div>
+
+            {expandedComments[post.id] && (
+              <div className="mt-5 pt-4 border-t border-zinc-800/50 space-y-4">
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                  {post.comments.length === 0 ? (
+                    <p className="text-xs text-zinc-500 font-medium text-center py-2">No comments yet. Start the conversation!</p>
+                  ) : (
+                    post.comments.map((comment: any) => (
+                      <div key={comment.id} className="flex gap-3 items-start bg-zinc-950/40 p-3 rounded-xl border border-zinc-800/30">
+                        <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden shrink-0 cursor-pointer" onClick={() => onUserClick(comment.profiles.id)}>
+                          {comment.profiles?.avatar_url ? (
+                            <img src={comment.profiles.avatar_url} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-zinc-400">{comment.profiles?.username?.charAt(0).toUpperCase()}</div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xs font-bold text-zinc-200 cursor-pointer hover:text-indigo-400 transition-colors" onClick={() => onUserClick(comment.profiles.id)}>@{comment.profiles?.username}</span>
+                            <span className="text-[9px] text-zinc-600 font-medium">{new Date(comment.created_at).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <p className="text-xs text-zinc-300 mt-0.5 whitespace-pre-wrap font-medium">{comment.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <form onSubmit={(e) => handleAddComment(e, post.id, post.profiles.id)} className="flex gap-2 mt-2">
+                  <input 
+                    type="text" 
+                    value={commentInputs[post.id] || ''} 
+                    onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                    placeholder="Write a comment... (use @username to mention)"
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-100 outline-none focus:border-indigo-500 transition-colors font-medium"
+                  />
+                  <button type="submit" disabled={!commentInputs[post.id]?.trim()} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors">
+                    Reply
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {postToShare && (
+        <SharePostModal post={postToShare} onClose={() => setPostToShare(null)} />
+      )}
+
+      {activeModalGame && (
+        <GameModal 
+          game={activeModalGame.game}
+          userGame={activeModalGame.userGame}
+          onClose={() => setActiveModalGame(null)}
+          onRefresh={() => fetchPosts(currentUser?.id)}
+        />
+      )}
     </div>
   )
 }

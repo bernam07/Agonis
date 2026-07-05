@@ -21,18 +21,19 @@ serve(async (req) => {
     const { access_token } = await tokenRes.json()
 
     const idsString = gameIds.join(',')
+    
     const igdbRes = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers: {
         'Client-ID': TWITCH_CLIENT_ID,
         'Authorization': `Bearer ${access_token}`
       },
-      body: `fields name, cover.url; where id = (${idsString}); limit 50;`
+      body: `fields name, cover.url, summary, platforms.name; where id = (${idsString}); limit 50;`
     })
     
     const games = await igdbRes.json()
     return new Response(JSON.stringify(games), { headers: { ...headers, 'Content-Type': 'application/json' }})
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { headers, status: 400 })
   }
 })

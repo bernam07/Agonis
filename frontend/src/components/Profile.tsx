@@ -28,6 +28,10 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
   const [loading, setLoading] = useState(true)
   
   const [viewMode, setViewMode] = useState<'activity' | 'library' | 'lists'>('activity')
+  const [isPlatformsExpanded, setIsPlatformsExpanded] = useState(false)
+  
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [sortOrder, setSortOrder] = useState<'recent' | 'rating' | 'name'>('recent')
   
   const [editUsername, setEditUsername] = useState('')
   const [editBio, setEditBio] = useState('')
@@ -94,8 +98,8 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
     if (gamesData && gamesData.length > 0) {
       const { data: igdbGames } = await supabase.functions.invoke('fetch-games', { body: { gameIds: gamesData.map(g => g.igdb_id) } })
       if (igdbGames) {
-        const combined = gamesData.map(dbGame => ({ ...dbGame, ...igdbGames.find((g: any) => g.id === dbGame.igdb_id) }))
-        setUserLibrary(combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
+        const combined = gamesData.map(dbGame => ({ ...dbGame, ...igdbGames.find((g: any) => Number(g.id) === Number(dbGame.igdb_id)) }))
+        setUserLibrary(combined)
       } else setUserLibrary(gamesData)
     } else setUserLibrary([])
     
@@ -114,7 +118,8 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
   const handleGameClick = (userGame: any) => {
     setSelectedGame({
       game: {
-        id: userGame.igdb_id,
+        ...userGame,
+        id: userGame.igdb_id || userGame.id,
         name: userGame.game_name || userGame.name,
         cover: userGame.cover || { url: userGame.game_cover }
       },
@@ -190,7 +195,7 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
       setEditAvatar(data.publicUrl)
     } catch (error: any) {
-      alert('Error uploading image: ' + error.message)
+      alert(error.message)
     } finally {
       setUploadingAvatar(false)
     }
@@ -266,15 +271,76 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
     if (data) setListGames(data)
   }
 
-  const stats = useMemo(() => {
+  const libStats = useMemo(() => {
     const total = userLibrary.length
-    const completed = userLibrary.filter(g => g.status === 'completed' || g.status === '100_percent').length
-    const backlog = userLibrary.filter(g => g.status === 'backlog').length
-    const ratedGames = userLibrary.filter(g => g.rating && g.rating > 0)
-    const averageRating = ratedGames.length ? (ratedGames.reduce((acc, g) => acc + g.rating, 0) / ratedGames.length).toFixed(1) : '0.0'
-    const favorites = userLibrary.filter(g => g.rating === 5)
-    return { total, completed, backlog, averageRating, favorites }
+    let completed = 0, backlog = 0, playing = 0, dropped = 0, percent100 = 0
+    let ratedCount = 0, ratingSum = 0
+    const favorites: any[] = []
+    const platforms: Record<string, number> = {}
+
+    userLibrary.forEach(g => {
+      if (g.status === 'completed') completed++
+      else if (g.status === 'backlog') backlog++
+      else if (g.status === 'playing') playing++
+      else if (g.status === 'dropped') dropped++
+      else if (g.status === '100_percent') { percent100++; completed++; }
+
+      if (g.rating && g.rating > 0) {
+        ratedCount++
+        ratingSum += g.rating
+      }
+      if (g.rating === 5) favorites.push(g)
+
+      if (g.platforms) {
+        g.platforms.forEach((p: any) => {
+          platforms[p.name] = (platforms[p.name] || 0) + 1
+        })
+      }
+    })
+
+    const averageRating = ratedCount > 0 ? (ratingSum / ratedCount).toFixed(1) : '0.0'
+    
+    const platformData = Object.entries(platforms)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+
+    const statusData = [
+      { name: 'Completed', value: completed, color: '#10b981' },
+      { name: 'Playing', value: playing, color: '#818cf8' },
+      { name: 'Backlog', value: backlog, color: '#fbbf24' },
+      { name: 'Dropped', value: dropped, color: '#f43f5e' }
+    ].filter(d => d.value > 0)
+
+    const maxPlatform = platformData.length > 0 ? Math.max(...platformData.map(p => p.count)) : 1
+
+    return { total, completed, backlog, playing, dropped, percent100, averageRating, favorites, platformData, statusData, maxPlatform }
   }, [userLibrary])
+
+  const filteredAndSortedLibrary = useMemo(() => {
+    let result = [...userLibrary]
+
+    if (filterStatus !== 'all') {
+      result = result.filter(g => g.status === filterStatus)
+    }
+
+    result.sort((a, b) => {
+      if (sortOrder === 'recent') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+      if (sortOrder === 'rating') {
+        return (b.rating || 0) - (a.rating || 0)
+      }
+      if (sortOrder === 'name') {
+        const nameA = a.game_name || a.name || ''
+        const nameB = b.game_name || b.name || ''
+        return nameA.localeCompare(nameB)
+      }
+      return 0
+    })
+
+    return result
+  }, [userLibrary, sortOrder, filterStatus])
 
   const canViewLibrary = isCurrentUser || profile?.is_public
 
@@ -369,7 +435,7 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
         <div className="flex flex-col items-center">
           <div className="w-full bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex flex-col items-center mb-8 max-w-xs mx-auto">
             <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Games Completed</span>
-            <span className="text-4xl font-black text-emerald-400">{stats.completed}</span>
+            <span className="text-4xl font-black text-emerald-400">{libStats.completed}</span>
           </div>
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-12 text-center w-full max-w-lg mx-auto flex flex-col items-center">
             <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-3xl mb-4">🔒</div>
@@ -382,18 +448,84 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <button onClick={() => setViewMode('library')} className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center transition-all cursor-pointer hover:border-indigo-500 hover:bg-zinc-800">
               <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase flex items-center gap-1">Total Games</span>
-              <span className="text-3xl font-black text-white">{stats.total}</span>
+              <span className="text-3xl font-black text-white">{libStats.total}</span>
             </button>
-            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center"><span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Completed</span><span className="text-3xl font-black text-emerald-400">{stats.completed}</span></div>
-            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center"><span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Backlog</span><span className="text-3xl font-black text-amber-400">{stats.backlog}</span></div>
-            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center"><span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Avg Rating</span><span className="text-3xl font-black text-yellow-500 flex items-center gap-1">{stats.averageRating}<span className="text-xl pb-1">★</span></span></div>
+            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center"><span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Completed</span><span className="text-3xl font-black text-emerald-400">{libStats.completed}</span></div>
+            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center"><span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Backlog</span><span className="text-3xl font-black text-amber-400">{libStats.backlog}</span></div>
+            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center"><span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Avg Rating</span><span className="text-3xl font-black text-yellow-500 flex items-center gap-1">{libStats.averageRating}<span className="text-xl pb-1">★</span></span></div>
           </div>
 
-          {stats.favorites.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-center min-h-[180px] h-full">
+              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-6 text-center">Library by Status</h3>
+              
+              {libStats.statusData.length > 0 ? (
+                <>
+                  <div className="w-full h-6 rounded-full overflow-hidden bg-zinc-950 flex mb-6 border border-zinc-800 shadow-inner">
+                    {libStats.statusData.map(s => (
+                      <div 
+                        key={s.name} 
+                        title={`${s.name}: ${s.value}`}
+                        className="h-full transition-all hover:brightness-110 cursor-pointer"
+                        style={{ width: `${(s.value / libStats.total) * 100}%`, backgroundColor: s.color }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    {libStats.statusData.map(s => (
+                      <div key={s.name} className="flex items-center gap-2 text-xs font-bold text-zinc-300">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }}></div>
+                        {s.name} <span className="text-zinc-500 ml-1">({s.value})</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-zinc-600 text-xs font-medium">Add games to your library to see stats.</div>
+              )}
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-center min-h-[180px] h-full">
+              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-6 text-center">Top Platforms</h3>
+              
+              {libStats.platformData.length > 0 ? (
+                <div className="space-y-4">
+                  {(isPlatformsExpanded ? libStats.platformData : libStats.platformData.slice(0, 3)).map((p, index) => (
+                    <div key={p.name} className="relative">
+                      <div className="flex justify-between text-[10px] font-bold text-zinc-300 mb-1.5 z-10 relative">
+                        <span className="truncate pr-2">{p.name}</span>
+                        <span className="text-indigo-400">{p.count}</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+                        <div 
+                          className="h-full bg-indigo-500 rounded-full transition-all" 
+                          style={{ width: `${(p.count / libStats.maxPlatform) * 100}%`, opacity: 1 - (index * 0.1) }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {libStats.platformData.length > 3 && (
+                    <button 
+                      onClick={() => setIsPlatformsExpanded(!isPlatformsExpanded)}
+                      className="w-full pt-2 flex items-center justify-center text-[10px] font-bold text-zinc-500 hover:text-indigo-400 transition-colors"
+                    >
+                      {isPlatformsExpanded ? '▲ Show Less' : '▼ Show More'}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-zinc-600 text-[10px] uppercase font-bold tracking-wider">No platform data available yet.</div>
+              )}
+            </div>
+          </div>
+
+          {libStats.favorites.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4 border-l-2 border-yellow-500 pl-3">Masterpieces</h3>
               <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                {stats.favorites.map(game => (
+                {libStats.favorites.map(game => (
                   <div key={game.id} onClick={() => handleGameClick(game)} className="cursor-pointer rounded-xl overflow-hidden border border-zinc-800 relative group">
                     {game.cover?.url ? <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full aspect-[3/4] object-cover transition-transform group-hover:scale-105" /> : <div className="w-full aspect-[3/4] bg-zinc-800 transition-transform group-hover:scale-105"></div>}
                     <div className="absolute inset-0 bg-zinc-950/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center"><span className="text-white text-xs font-bold line-clamp-2">{game.name || game.game_name}</span></div>
@@ -433,12 +565,45 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
             )}
 
             {viewMode === 'library' && (
-              <div>
-                {userLibrary.length === 0 ? (
-                  <div className="text-center py-12 text-zinc-500 font-medium">This library is empty.</div>
+              <div className="space-y-6">
+                
+                {userLibrary.length > 0 && (
+                  <div className="flex flex-col sm:flex-row gap-3 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800/50 justify-between items-center">
+                    <div className="flex gap-3 w-full sm:w-auto">
+                      <select 
+                        value={filterStatus} 
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs font-bold px-3 py-2 rounded-xl outline-none focus:border-indigo-500 transition-colors cursor-pointer flex-1 sm:flex-none"
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="playing">Playing</option>
+                        <option value="backlog">Backlog</option>
+                        <option value="completed">Completed</option>
+                        <option value="100_percent">100%</option>
+                        <option value="dropped">Dropped</option>
+                      </select>
+                      
+                      <select 
+                        value={sortOrder} 
+                        onChange={(e) => setSortOrder(e.target.value as any)}
+                        className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs font-bold px-3 py-2 rounded-xl outline-none focus:border-indigo-500 transition-colors cursor-pointer flex-1 sm:flex-none"
+                      >
+                        <option value="recent">Recently Added</option>
+                        <option value="rating">Highest Rating</option>
+                        <option value="name">Name (A-Z)</option>
+                      </select>
+                    </div>
+                    <div className="text-xs font-bold text-zinc-500">
+                      Showing {filteredAndSortedLibrary.length} games
+                    </div>
+                  </div>
+                )}
+
+                {filteredAndSortedLibrary.length === 0 ? (
+                  <div className="text-center py-12 text-zinc-500 font-medium">No games found matching your filters.</div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                    {userLibrary.map((game) => (
+                    {filteredAndSortedLibrary.map((game) => (
                       <div key={game.id} onClick={() => handleGameClick(game)} className="cursor-pointer bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex flex-col relative group transition-transform hover:scale-105">
                         <span className="absolute top-3 right-3 z-10 text-[9px] font-black bg-zinc-950/90 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded capitalize">{game.status.replace('_', ' ')}</span>
                         <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-950 mb-2">
@@ -514,10 +679,14 @@ export default function Profile({ userId, onBack, onUserClick }: { userId?: stri
                                       className="aspect-[3/4] w-full rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800/40 cursor-pointer" 
                                       onClick={() => {
                                         const trackedGame = userLibrary.find(libGame => libGame.igdb_id === g.igdb_id);
-                                        setSelectedGame({ 
-                                          game: { id: g.igdb_id, name: g.game_name, cover: { url: g.game_cover } }, 
-                                          userGame: trackedGame || null 
-                                        });
+                                        if (trackedGame) {
+                                          handleGameClick(trackedGame);
+                                        } else {
+                                          setSelectedGame({ 
+                                            game: { id: g.igdb_id, name: g.game_name, cover: { url: g.game_cover } }, 
+                                            userGame: null 
+                                          });
+                                        }
                                       }}
                                     >
                                       {g.game_cover && <img src={g.game_cover.replace('t_thumb', 't_cover_big')} alt={g.game_name} className="w-full h-full object-cover" />}

@@ -48,14 +48,16 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
   const [communityAvg, setCommunityAvg] = useState<string>('0.0')
   const [communityLoading, setCommunityLoading] = useState(false)
 
-  const igdbId = game.igdb_id || game.id
+  const igdbId = game?.igdb_id || game?.id
 
   useEffect(() => {
-    loadScreenshots()
-    loadMyLists()
-    fetchGameDetails()
-    loadCommunityData()
-  }, [game])
+    if (igdbId) {
+      loadScreenshots()
+      loadMyLists()
+      fetchGameDetails()
+      loadCommunityData()
+    }
+  }, [igdbId])
 
   const fetchGameDetails = async () => {
     if (!igdbId) return
@@ -84,15 +86,25 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
     if (!igdbId) return
     setCommunityLoading(true)
     
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_games')
-      .select(`
-        rating, 
-        review, 
-        completed_at,
-        profiles ( id, username, avatar_url )
-      `)
-      .eq('igdb_id', igdbId)
+  .select(`
+    rating, 
+    review, 
+    profiles ( username, avatar_url )
+  `)
+  .eq('igdb_id', igdbId)
+  .not('rating', 'is', null)
+
+    if (error) {
+      alert("ERRO DO SUPABASE: " + error.message)
+      console.error("Erro completo:", error)
+      
+      const fallback = await supabase.from('user_games').select('rating, review').eq('igdb_id', igdbId)
+      if (fallback.data && fallback.data.length > 0) {
+        alert("As notas existem! O erro está na Foreign Key dos profiles.")
+      }
+    }
 
     if (data) {
       const ratedGames = data.filter(d => d.rating && d.rating > 0)
@@ -104,6 +116,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
       const withReviews = data.filter(d => d.review && d.review.trim() !== '')
       setCommunityReviews(withReviews)
     }
+    
     setCommunityLoading(false)
   }
 

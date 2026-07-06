@@ -41,7 +41,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4">
-      <button 
+      <button
         onClick={onBack}
         className="absolute top-8 left-8 text-zinc-500 hover:text-white font-bold text-sm flex items-center gap-2 transition-colors"
       >
@@ -56,7 +56,9 @@ export default function Auth({ onBack }: { onBack: () => void }) {
 
         <form className="flex flex-col gap-4">
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">Email Address</label>
+            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">
+              Email Address
+            </label>
             <input
               type="email"
               value={email}
@@ -67,7 +69,9 @@ export default function Auth({ onBack }: { onBack: () => void }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">Password</label>
+            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">
+              Password
+            </label>
             <input
               type="password"
               value={password}

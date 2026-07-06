@@ -34,23 +34,27 @@ export default function SharePostModal({ post, onClose }: any) {
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
       <div className="w-full max-w-sm flex flex-col gap-4">
         {/* O Card que será exportado */}
-        <div 
-          ref={cardRef} 
+        <div
+          ref={cardRef}
           className="bg-zinc-900 border border-zinc-800 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-          
+
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-800">
               {post.profiles?.avatar_url ? (
                 <img src={post.profiles.avatar_url} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center font-black text-xl text-zinc-500">{post.profiles?.username?.charAt(0).toUpperCase()}</div>
+                <div className="w-full h-full flex items-center justify-center font-black text-xl text-zinc-500">
+                  {post.profiles?.username?.charAt(0).toUpperCase()}
+                </div>
               )}
             </div>
             <div>
               <div className="font-black text-white text-base">@{post.profiles.username}</div>
-              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Agonis Post</div>
+              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                Agonis Post
+              </div>
             </div>
           </div>
 
@@ -66,15 +70,30 @@ export default function SharePostModal({ post, onClose }: any) {
 
           {post.game_name && (
             <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 p-2 rounded-xl mt-4">
-              {post.game_cover && <img src={post.game_cover.replace('t_thumb', 't_cover_small')} className="w-8 h-10 object-cover rounded-md" />}
+              {post.game_cover && (
+                <img
+                  src={post.game_cover.replace('t_thumb', 't_cover_small')}
+                  className="w-8 h-10 object-cover rounded-md"
+                />
+              )}
               <span className="text-xs font-bold text-indigo-400">{post.game_name}</span>
             </div>
           )}
         </div>
 
         <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors">Cancel</button>
-          <button onClick={handleDownload} className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-colors">Download Story</button>
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDownload}
+            className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-colors"
+          >
+            Download Story
+          </button>
         </div>
       </div>
     </div>

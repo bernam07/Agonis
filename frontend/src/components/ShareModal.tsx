@@ -25,7 +25,11 @@ export default function ShareModal({ game, userGame, onClose }: any) {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data } = await supabase.from('profiles').select('username').eq('id', userGame.user_id).single()
+      const { data } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userGame.user_id)
+        .single()
       if (data) setUsername(data.username)
     }
     fetchUser()
@@ -49,14 +53,13 @@ export default function ShareModal({ game, userGame, onClose }: any) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
       <div className="w-full max-w-md flex flex-col items-center gap-6">
-        
-        <div 
-          ref={cardRef} 
+        <div
+          ref={cardRef}
           className="w-full aspect-[4/5] bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden relative shadow-2xl flex flex-col justify-between p-8"
           style={{
             backgroundImage: `linear-gradient(to bottom, rgba(9, 9, 11, 0.7), rgba(9, 9, 11, 1)), url(${game.cover?.url?.replace('t_thumb', 't_1080p')})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
           }}
         >
           <div className="flex justify-between items-start">
@@ -69,14 +72,19 @@ export default function ShareModal({ game, userGame, onClose }: any) {
           <div className="flex flex-col items-center text-center gap-4 mt-auto relative z-10">
             <div className="w-32 aspect-[3/4] rounded-xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-zinc-700/50">
               {game.cover?.url && (
-                <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full h-full object-cover" />
+                <img
+                  src={game.cover.url.replace('t_thumb', 't_cover_big')}
+                  alt={game.name}
+                  className="w-full h-full object-cover"
+                />
               )}
             </div>
-            
+
             <div>
               <h2 className="text-2xl font-black text-white leading-tight mb-1">{game.name}</h2>
               <div className="flex justify-center text-amber-400 text-lg">
-                {'★'.repeat(userGame.rating || 0)}{'☆'.repeat(5 - (userGame.rating || 0))}
+                {'★'.repeat(userGame.rating || 0)}
+                {'☆'.repeat(5 - (userGame.rating || 0))}
               </div>
             </div>
 
@@ -89,14 +97,14 @@ export default function ShareModal({ game, userGame, onClose }: any) {
         </div>
 
         <div className="flex gap-3 w-full">
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-sm transition-colors"
           >
             Cancel
           </button>
-          <button 
-            onClick={handleDownload} 
+          <button
+            onClick={handleDownload}
             disabled={downloading}
             className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors flex justify-center items-center gap-2"
           >

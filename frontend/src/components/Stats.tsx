@@ -20,28 +20,34 @@ export default function Stats({ library }: { library: any[] }) {
   // Cálculos Automáticos baseados na biblioteca
   const stats = useMemo(() => {
     const total = library.length
-    const completed = library.filter(g => g.status === 'completed' || g.status === '100_percent').length
-    const backlog = library.filter(g => g.status === 'backlog').length
-    
-    const ratedGames = library.filter(g => g.rating && g.rating > 0)
-    const averageRating = ratedGames.length 
+    const completed = library.filter(
+      (g) => g.status === 'completed' || g.status === '100_percent'
+    ).length
+    const backlog = library.filter((g) => g.status === 'backlog').length
+
+    const ratedGames = library.filter((g) => g.rating && g.rating > 0)
+    const averageRating = ratedGames.length
       ? (ratedGames.reduce((acc, g) => acc + g.rating, 0) / ratedGames.length).toFixed(1)
       : '0.0'
 
-    const favorites = library.filter(g => g.rating === 5)
+    const favorites = library.filter((g) => g.rating === 5)
 
     return { total, completed, backlog, averageRating, favorites }
   }, [library])
 
-  const cardClass = "bg-gray-100 dark:bg-gray-800 shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] dark:shadow-[8px_8px_16px_#111827,-8px_-8px_16px_#374151] rounded-3xl p-6 flex flex-col items-center justify-center"
+  const cardClass =
+    'bg-gray-100 dark:bg-gray-800 shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] dark:shadow-[8px_8px_16px_#111827,-8px_-8px_16px_#374151] rounded-3xl p-6 flex flex-col items-center justify-center'
 
   if (library.length === 0) {
-    return <div className="text-center p-8 text-gray-500 font-bold text-xl">Add games to your library to see stats!</div>
+    return (
+      <div className="text-center p-8 text-gray-500 font-bold text-xl">
+        Add games to your library to see stats!
+      </div>
+    )
   }
 
   return (
     <div className="w-full flex flex-col gap-8">
-      
       {/* Cards de Números */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div className={cardClass}>
@@ -71,10 +77,17 @@ export default function Stats({ library }: { library: any[] }) {
             Masterpieces (5 Stars)
           </h2>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-            {stats.favorites.map(game => (
-              <div key={game.id} className="relative rounded-2xl overflow-hidden shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#111827,-6px_-6px_12px_#374151]">
+            {stats.favorites.map((game) => (
+              <div
+                key={game.id}
+                className="relative rounded-2xl overflow-hidden shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#111827,-6px_-6px_12px_#374151]"
+              >
                 {game.cover?.url ? (
-                  <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full aspect-[3/4] object-cover" />
+                  <img
+                    src={game.cover.url.replace('t_thumb', 't_cover_big')}
+                    alt={game.name}
+                    className="w-full aspect-[3/4] object-cover"
+                  />
                 ) : (
                   <div className="w-full aspect-[3/4] bg-gray-200 dark:bg-gray-700"></div>
                 )}
@@ -86,7 +99,6 @@ export default function Stats({ library }: { library: any[] }) {
           </div>
         </div>
       )}
-
     </div>
   )
 }

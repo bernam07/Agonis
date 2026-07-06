@@ -26,8 +26,8 @@ export default function GameSearch() {
 
   const loadRecommendations = async () => {
     setLoading(true)
-    const { data, error } = await supabase.functions.invoke('search-igdb', { 
-      body: { searchQuery: "The Last of Us" } 
+    const { data, error } = await supabase.functions.invoke('search-igdb', {
+      body: { searchQuery: 'The Last of Us' },
     })
     if (!error && data) setResults(data)
     setLoading(false)
@@ -42,7 +42,7 @@ export default function GameSearch() {
     if (!query.trim()) return loadRecommendations()
     setLoading(true)
     const { data, error } = await supabase.functions.invoke('search-igdb', {
-      body: { searchQuery: query }
+      body: { searchQuery: query },
     })
 
     if (error) {
@@ -55,7 +55,7 @@ export default function GameSearch() {
     if (Array.isArray(data)) {
       setResults(data)
     } else {
-      console.error("Erro da API:", data)
+      console.error('Erro da API:', data)
       setResults([])
     }
   }
@@ -63,14 +63,17 @@ export default function GameSearch() {
   return (
     <div className="w-full">
       <form onSubmit={handleSearch} className="flex gap-3 mb-8">
-        <input 
-          type="text" 
+        <input
+          type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search games, franchises, genres..."
           className="flex-1 p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 outline-none focus:border-zinc-700 transition-colors text-sm font-medium"
         />
-        <button type="submit" className="px-6 py-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 font-bold text-sm text-zinc-200 transition-colors">
+        <button
+          type="submit"
+          className="px-6 py-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 font-bold text-sm text-zinc-200 transition-colors"
+        >
           {loading ? '...' : 'Search'}
         </button>
       </form>
@@ -82,34 +85,35 @@ export default function GameSearch() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-        {Array.isArray(results) && results.map((game) => (
-          <div 
-            key={game.id} 
-            onClick={() => setSelectedGame(game)} 
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-zinc-700 transition-all flex flex-col"
-          >
-            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
-              {game.cover?.url ? (
-                <img 
-                  src={game.cover.url.replace('t_thumb', 't_cover_big')} 
-                  alt={game.name} 
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs font-semibold">No Artwork</div>
-              )}
+        {Array.isArray(results) &&
+          results.map((game) => (
+            <div
+              key={game.id}
+              onClick={() => setSelectedGame(game)}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-zinc-700 transition-all flex flex-col"
+            >
+              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
+                {game.cover?.url ? (
+                  <img
+                    src={game.cover.url.replace('t_thumb', 't_cover_big')}
+                    alt={game.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs font-semibold">
+                    No Artwork
+                  </div>
+                )}
+              </div>
+              <h3 className="font-bold text-sm text-zinc-200 line-clamp-2 text-center px-1 mt-auto">
+                {game.name}
+              </h3>
             </div>
-            <h3 className="font-bold text-sm text-zinc-200 line-clamp-2 text-center px-1 mt-auto">{game.name}</h3>
-          </div>
-        ))}
+          ))}
       </div>
 
       {selectedGame && (
-        <GameModal 
-          game={selectedGame} 
-          onClose={() => setSelectedGame(null)} 
-          onRefresh={() => {}} 
-        />
+        <GameModal game={selectedGame} onClose={() => setSelectedGame(null)} onRefresh={() => {}} />
       )}
     </div>
   )

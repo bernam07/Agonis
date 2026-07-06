@@ -448,6 +448,51 @@ export default function Profile({
   if (!profile)
     return <div className="text-zinc-500 text-center py-10 font-medium">User not found.</div>
 
+  const renderBadges = () => {
+    const badges = []
+    
+    if (libStats.completed >= 5) {
+      badges.push({ icon: '🏆', name: 'Completionist', desc: 'Completed 5+ games' })
+    }
+    if (libStats.favorites.length >= 3) {
+      badges.push({ icon: '⭐', name: 'Tastemaker', desc: '3+ Masterpieces' })
+    }
+    if (followersCount >= 10) {
+      badges.push({ icon: '🦋', name: 'Social Butterfly', desc: '10+ Followers' })
+    }
+    if (libStats.total >= 20) {
+      badges.push({ icon: '🔥', name: 'Veteran', desc: '20+ Games Tracked' })
+    }
+
+    if (badges.length === 0) return null
+
+    return (
+      <div className="mb-8 animate-fade-in">
+        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-4 border-l-2 border-indigo-500 pl-3">
+          Achievements
+        </h3>
+        <div className="flex gap-3 flex-wrap">
+          {badges.map((b) => (
+            <div
+              key={b.name}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex items-center gap-3 w-max group hover:border-indigo-500 transition-colors shadow-sm"
+            >
+              <div className="text-2xl group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                {b.icon}
+              </div>
+              <div>
+                <div className="font-bold text-zinc-200 text-sm group-hover:text-indigo-400 transition-colors">
+                  {b.name}
+                </div>
+                <div className="text-[10px] text-zinc-500 font-medium">{b.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-10">
       {!isCurrentUser && userId && (
@@ -618,6 +663,7 @@ export default function Profile({
         </div>
       ) : (
         <>
+        {renderBadges()}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <button
               onClick={() => setViewMode('library')}

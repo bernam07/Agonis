@@ -54,6 +54,8 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
   }, [])
 
   const handleAcceptRequest = async (notif: any) => {
+    if (!notif.profiles) return
+
     await supabase
       .from('follows')
       .insert([{ follower_id: notif.profiles.id, following_id: notif.receiver_id }])
@@ -74,6 +76,8 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
   }
 
   const handleRejectRequest = async (notif: any) => {
+    if (!notif.profiles) return
+
     await supabase
       .from('follow_requests')
       .delete()
@@ -127,6 +131,26 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
     if (nextState) markAsRead()
   }
 
+  const clearAllNotifications = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+
+    setNotifications([])
+    setUnreadCount(0)
+
+    await supabase.from('notifications').delete().eq('receiver_id', user.id)
+  }
+
+  const clearSingleNotification = async (e: React.MouseEvent, notifId: string) => {
+    e.stopPropagation()
+    setNotifications((prev) => prev.filter((n) => n.id !== notifId))
+
+    await supabase.from('notifications').delete().eq('id', notifId)
+  }
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -143,8 +167,16 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50">
-          <div className="p-4 border-b border-zinc-800 bg-zinc-950/50">
+          <div className="p-4 border-b border-zinc-800 bg-zinc-950/50 flex justify-between items-center">
             <h3 className="text-sm font-bold text-white">Notifications</h3>
+            {notifications.length > 0 && (
+              <button
+                onClick={clearAllNotifications}
+                className="text-[10px] font-bold text-zinc-500 hover:text-rose-500 bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 rounded-md border border-zinc-800 transition-colors"
+              >
+                Clear All
+              </button>
+            )}
           </div>
 
           <div className="max-h-96 overflow-y-auto custom-scrollbar">
@@ -158,21 +190,24 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                   key={notif.id}
                   onClick={() => {
                     setIsOpen(false)
-                    onUserClick(notif.profiles.id)
+                    if (notif.profiles?.id) onUserClick(notif.profiles.id)
                   }}
-                  className={`p-4 border-b border-zinc-800/50 flex items-center gap-3 cursor-pointer hover:bg-zinc-800 transition-colors ${!notif.is_read ? 'bg-indigo-950/10' : ''}`}
+                  className={`group relative p-4 border-b border-zinc-800/50 flex items-start gap-3 cursor-pointer hover:bg-zinc-800 transition-colors ${!notif.is_read ? 'bg-indigo-950/10' : ''}`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden shrink-0">
-                    {notif.profiles.avatar_url ? (
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden shrink-0 mt-0.5">
+                    {notif.profiles?.avatar_url ? (
                       <img src={notif.profiles.avatar_url} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center font-bold text-zinc-500 text-sm">
-                        {notif.profiles.username?.charAt(0).toUpperCase()}
+                        {notif.profiles?.username?.charAt(0).toUpperCase() || '?'}
                       </div>
                     )}
                   </div>
-                  <div className="text-sm">
-                    <span className="font-bold text-zinc-200">@{notif.profiles.username} </span>
+
+                  <div className="text-sm flex-1 pr-4">
+                    <span className="font-bold text-zinc-200">
+                      @{notif.profiles?.username || 'unknown'}{' '}
+                    </span>
                     <span className="text-zinc-400">
                       {notif.type === 'like' && 'liked your post.'}
                       {notif.type === 'follow' && 'started following you.'}
@@ -182,7 +217,7 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                       {notif.type === 'mention' && 'mentioned you in a post or comment.'}
                     </span>
 
-                    {notif.type === 'follow_request' && (
+                    {notif.type === 'follow_request' && notif.profiles && (
                       <div className="flex gap-2 mt-2">
                         <button
                           onClick={(e) => {
@@ -212,6 +247,14 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                       })}
                     </div>
                   </div>
+
+                  <button
+                    onClick={(e) => clearSingleNotification(e, notif.id)}
+                    className="absolute top-3 right-3 text-zinc-600 hover:text-rose-500 text-lg leading-none opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                    title="Remove notification"
+                  >
+                    ×
+                  </button>
                 </div>
               ))
             )}

@@ -18,13 +18,16 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import SharePostModal from './SharePostModal'
 import GameModal from './GameModal'
+import { PostSkeleton } from './Skeletons'
 
 export default function Feed({
   library,
   onUserClick,
+  onRefreshLibrary,
 }: {
   library: any[]
   onUserClick: (id: string) => void
+  onRefreshLibrary: () => void
 }) {
   const [posts, setPosts] = useState<any[]>([])
   const [content, setContent] = useState('')
@@ -46,6 +49,12 @@ export default function Feed({
   const [hasSpoilers, setHasSpoilers] = useState(false)
   const [revealedSpoilers, setRevealedSpoilers] = useState<Record<string, boolean>>({})
 
+  const [loadingPosts, setLoadingPosts] = useState(true)
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const POSTS_PER_PAGE = 10
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setCurrentUser(user)
@@ -53,7 +62,13 @@ export default function Feed({
     })
   }, [])
 
-  const fetchPosts = async (userId: string | undefined) => {
+  const fetchPosts = async (userId: string | undefined, pageNum = 0) => {
+    if (pageNum === 0) setLoadingPosts(true)
+    else setLoadingMore(true)
+
+    const from = pageNum * POSTS_PER_PAGE
+    const to = from + POSTS_PER_PAGE - 1
+
     const { data, error } = await supabase
       .from('posts')
       .select(
@@ -68,9 +83,12 @@ export default function Feed({
       `
       )
       .order('created_at', { ascending: false })
+      .range(from, to) // Limita a pesquisa
 
     if (error) {
       console.error(error)
+      setLoadingPosts(false)
+      setLoadingMore(false)
       return
     }
 
@@ -82,9 +100,21 @@ export default function Feed({
         commentsCount: post.comments?.length || 0,
         comments: post.comments || [],
       }))
-      setPosts(processedPosts)
+      
+      if (pageNum === 0) {
+        setPosts(processedPosts)
+      } else {
+        setPosts((prev) => [...prev, ...processedPosts])
+      }
+      
+      setHasMore(data.length === POSTS_PER_PAGE)
+      setPage(pageNum)
     }
+    
+    setLoadingPosts(false)
+    setLoadingMore(false)
   }
+
 
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -429,218 +459,242 @@ export default function Feed({
       </div>
 
       <div className="flex flex-col gap-5">
-        {posts.map((post) => {
-          const isSpoiler = post.has_spoilers && !revealedSpoilers[post.id]
+        {loadingPosts ? (
+          <>
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+          </>
+        ) : posts.length === 0 ? (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-10 text-center text-zinc-500 font-medium">
+            No posts yet. Be the first to share something!
+          </div>
+        ) : (
+          posts.map((post) => {
+            const isSpoiler = post.has_spoilers && !revealedSpoilers[post.id]
 
-          return (
-            <div
-              key={post.id}
-              className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 transition-colors hover:border-zinc-700"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div
-                  onClick={() => onUserClick(post.profiles.id)}
-                  className="flex items-center gap-3 cursor-pointer group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-black text-zinc-400 overflow-hidden group-hover:border-indigo-500 transition-colors">
-                    {post.profiles?.avatar_url ? (
-                      <img
-                        src={post.profiles.avatar_url}
-                        alt="avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      post.profiles?.username?.charAt(0).toUpperCase() || '?'
-                    )}
-                  </div>
-                  <div>
-                    <div className="font-bold text-zinc-100 text-sm group-hover:text-indigo-400 transition-colors">
-                      @{post.profiles?.username || 'unknown'}
+            return (
+              <div
+                key={post.id}
+                className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 transition-colors hover:border-zinc-700"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div
+                    onClick={() => onUserClick(post.profiles.id)}
+                    className="flex items-center gap-3 cursor-pointer group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-black text-zinc-400 overflow-hidden group-hover:border-indigo-500 transition-colors">
+                      {post.profiles?.avatar_url ? (
+                        <img
+                          src={post.profiles.avatar_url}
+                          alt="avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        post.profiles?.username?.charAt(0).toUpperCase() || '?'
+                      )}
                     </div>
-                    <div className="text-xs font-medium text-zinc-500">
-                      {new Date(post.created_at).toLocaleString([], {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      })}
+                    <div>
+                      <div className="font-bold text-zinc-100 text-sm group-hover:text-indigo-400 transition-colors">
+                        @{post.profiles?.username || 'unknown'}
+                      </div>
+                      <div className="text-xs font-medium text-zinc-500">
+                        {new Date(post.created_at).toLocaleString([], {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                      </div>
                     </div>
                   </div>
+
+                  {currentUser?.id === post.profiles.id && (
+                    <button
+                      onClick={() => deletePost(post.id)}
+                      className="text-zinc-600 hover:text-rose-500 transition-colors p-1"
+                      title="Delete Post"
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
 
-                {currentUser?.id === post.profiles.id && (
-                  <button
-                    onClick={() => deletePost(post.id)}
-                    className="text-zinc-600 hover:text-rose-500 transition-colors p-1"
-                    title="Delete Post"
+                {post.game_name && (
+                  <div
+                    onClick={() => handleGameClick(post)}
+                    className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 w-max pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
                   >
-                    🗑️
+                    {post.game_cover && (
+                      <img
+                        src={post.game_cover.replace('t_thumb', 't_cover_small')}
+                        alt={post.game_name}
+                        className="w-8 h-10 object-cover rounded-md"
+                      />
+                    )}
+                    <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors">
+                      {post.game_name}
+                    </span>
+                  </div>
+                )}
+
+                {isSpoiler ? (
+                  <div className="bg-zinc-950/80 border border-amber-500/30 rounded-xl p-6 text-center my-3 backdrop-blur-sm">
+                    <span className="text-amber-500 text-2xl block mb-2">⚠️</span>
+                    <h4 className="text-amber-500 font-bold text-sm mb-2">Spoiler Warning</h4>
+                    <p className="text-zinc-400 text-xs mb-4">This post contains story spoilers.</p>
+                    <button
+                      onClick={() => setRevealedSpoilers((prev) => ({ ...prev, [post.id]: true }))}
+                      className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
+                    >
+                      Reveal Spoiler
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {post.content && (
+                      <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-medium mb-4">
+                        {renderContent(post.content)}
+                      </p>
+                    )}
+
+                    {post.image_url && (
+                      <div className="mb-4 rounded-xl overflow-hidden border border-zinc-800/50">
+                        <img
+                          src={post.image_url}
+                          alt="Post attachment"
+                          className="w-full max-h-96 object-cover"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="flex items-center justify-between pt-3 border-t border-zinc-800/50">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => toggleLike(post.id, post.profiles.id, post.hasLiked)}
+                      className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
+                        post.hasLiked
+                          ? 'text-rose-500 hover:text-rose-400'
+                          : 'text-zinc-500 hover:text-rose-400'
+                      }`}
+                    >
+                      <span className="text-lg leading-none">{post.hasLiked ? '♥' : '♡'}</span>
+                      <span>
+                        {post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => toggleCommentsVisibility(post.id)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors"
+                    >
+                      <span className="text-base leading-none"></span>
+                      <span>
+                        {post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}
+                      </span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setPostToShare(post)}
+                    className="text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors flex items-center gap-1.5"
+                  >
+                    ➦ Share
                   </button>
+                </div>
+
+                {expandedComments[post.id] && (
+                  <div className="mt-5 pt-4 border-t border-zinc-800/50 space-y-4">
+                    <div className="space-y-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                      {post.comments.length === 0 ? (
+                        <p className="text-xs text-zinc-500 font-medium text-center py-2">
+                          No comments yet. Start the conversation!
+                        </p>
+                      ) : (
+                        post.comments.map((comment: any) => (
+                          <div
+                            key={comment.id}
+                            className="flex gap-3 items-start bg-zinc-950/40 p-3 rounded-xl border border-zinc-800/30"
+                          >
+                            <div
+                              className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden shrink-0 cursor-pointer"
+                              onClick={() => onUserClick(comment.profiles.id)}
+                            >
+                              {comment.profiles?.avatar_url ? (
+                                <img
+                                  src={comment.profiles.avatar_url}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-zinc-400">
+                                  {comment.profiles?.username?.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-baseline gap-2">
+                                <span
+                                  className="text-xs font-bold text-zinc-200 cursor-pointer hover:text-indigo-400 transition-colors"
+                                  onClick={() => onUserClick(comment.profiles.id)}
+                                >
+                                  @{comment.profiles?.username}
+                                </span>
+                                <span className="text-[9px] text-zinc-600 font-medium">
+                                  {new Date(comment.created_at).toLocaleDateString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
+                              <p className="text-xs text-zinc-300 mt-0.5 whitespace-pre-wrap font-medium">
+                                {renderContent(comment.content)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <form
+                      onSubmit={(e) => handleAddComment(e, post.id, post.profiles.id)}
+                      className="flex gap-2 mt-2"
+                    >
+                      <input
+                        type="text"
+                        value={commentInputs[post.id] || ''}
+                        onChange={(e) =>
+                          setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
+                        }
+                        placeholder="Write a comment... (use @username to mention)"
+                        className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-100 outline-none focus:border-indigo-500 transition-colors font-medium"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!commentInputs[post.id]?.trim()}
+                        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors"
+                      >
+                        Reply
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
-
-              {post.game_name && (
-                <div
-                  onClick={() => handleGameClick(post)}
-                  className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 w-max pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
-                >
-                  {post.game_cover && (
-                    <img
-                      src={post.game_cover.replace('t_thumb', 't_cover_small')}
-                      alt={post.game_name}
-                      className="w-8 h-10 object-cover rounded-md"
-                    />
-                  )}
-                  <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors">
-                    {post.game_name}
-                  </span>
-                </div>
-              )}
-
-              {isSpoiler ? (
-                <div className="bg-zinc-950/80 border border-amber-500/30 rounded-xl p-6 text-center my-3 backdrop-blur-sm">
-                  <span className="text-amber-500 text-2xl block mb-2">⚠️</span>
-                  <h4 className="text-amber-500 font-bold text-sm mb-2">Spoiler Warning</h4>
-                  <p className="text-zinc-400 text-xs mb-4">This post contains story spoilers.</p>
-                  <button
-                    onClick={() => setRevealedSpoilers((prev) => ({ ...prev, [post.id]: true }))}
-                    className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
-                  >
-                    Reveal Spoiler
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {post.content && (
-                    <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-medium mb-4">
-                      {renderContent(post.content)}
-                    </p>
-                  )}
-
-                  {post.image_url && (
-                    <div className="mb-4 rounded-xl overflow-hidden border border-zinc-800/50">
-                      <img
-                        src={post.image_url}
-                        alt="Post attachment"
-                        className="w-full max-h-96 object-cover"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-
-              <div className="flex items-center justify-between pt-3 border-t border-zinc-800/50">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => toggleLike(post.id, post.profiles.id, post.hasLiked)}
-                    className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
-                      post.hasLiked
-                        ? 'text-rose-500 hover:text-rose-400'
-                        : 'text-zinc-500 hover:text-rose-400'
-                    }`}
-                  >
-                    <span className="text-lg leading-none">{post.hasLiked ? '♥' : '♡'}</span>
-                    <span>
-                      {post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => toggleCommentsVisibility(post.id)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors"
-                  >
-                    <span className="text-base leading-none"></span>
-                    <span>
-                      {post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}
-                    </span>
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => setPostToShare(post)}
-                  className="text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors flex items-center gap-1.5"
-                >
-                  ➦ Share
-                </button>
-              </div>
-
-              {expandedComments[post.id] && (
-                <div className="mt-5 pt-4 border-t border-zinc-800/50 space-y-4">
-                  <div className="space-y-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                    {post.comments.length === 0 ? (
-                      <p className="text-xs text-zinc-500 font-medium text-center py-2">
-                        No comments yet. Start the conversation!
-                      </p>
-                    ) : (
-                      post.comments.map((comment: any) => (
-                        <div
-                          key={comment.id}
-                          className="flex gap-3 items-start bg-zinc-950/40 p-3 rounded-xl border border-zinc-800/30"
-                        >
-                          <div
-                            className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden shrink-0 cursor-pointer"
-                            onClick={() => onUserClick(comment.profiles.id)}
-                          >
-                            {comment.profiles?.avatar_url ? (
-                              <img
-                                src={comment.profiles.avatar_url}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-zinc-400">
-                                {comment.profiles?.username?.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-baseline gap-2">
-                              <span
-                                className="text-xs font-bold text-zinc-200 cursor-pointer hover:text-indigo-400 transition-colors"
-                                onClick={() => onUserClick(comment.profiles.id)}
-                              >
-                                @{comment.profiles?.username}
-                              </span>
-                              <span className="text-[9px] text-zinc-600 font-medium">
-                                {new Date(comment.created_at).toLocaleDateString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
-                            </div>
-                            <p className="text-xs text-zinc-300 mt-0.5 whitespace-pre-wrap font-medium">
-                              {renderContent(comment.content)}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  <form
-                    onSubmit={(e) => handleAddComment(e, post.id, post.profiles.id)}
-                    className="flex gap-2 mt-2"
-                  >
-                    <input
-                      type="text"
-                      value={commentInputs[post.id] || ''}
-                      onChange={(e) =>
-                        setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
-                      }
-                      placeholder="Write a comment... (use @username to mention)"
-                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-100 outline-none focus:border-indigo-500 transition-colors font-medium"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!commentInputs[post.id]?.trim()}
-                      className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors"
-                    >
-                      Reply
-                    </button>
-                  </form>
-                </div>
-              )}
-            </div>
-          )
-        })}
+            )
+          })
+        )}
       </div>
+
+      {hasMore && !loadingPosts && posts.length > 0 && (
+        <div className="flex justify-center mt-6 mb-8">
+          <button
+            onClick={() => fetchPosts(currentUser?.id, page + 1)}
+            disabled={loadingMore}
+            className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500 text-zinc-300 font-bold px-6 py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center gap-2"
+          >
+            {loadingMore ? 'Loading more...' : '↓ Load More'}
+          </button>
+        </div>
+      )}
 
       {postToShare && <SharePostModal post={postToShare} onClose={() => setPostToShare(null)} />}
 
@@ -649,7 +703,10 @@ export default function Feed({
           game={activeModalGame.game}
           userGame={activeModalGame.userGame}
           onClose={() => setActiveModalGame(null)}
-          onRefresh={() => fetchPosts(currentUser?.id)}
+          onRefresh={() => {
+            fetchPosts(currentUser?.id)
+            onRefreshLibrary()
+          }}
         />
       )}
     </div>

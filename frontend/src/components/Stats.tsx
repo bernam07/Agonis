@@ -17,7 +17,6 @@
 import { useMemo } from 'react'
 
 export default function Stats({ library }: { library: any[] }) {
-  // Cálculos Automáticos baseados na biblioteca
   const stats = useMemo(() => {
     const total = library.length
     const completed = library.filter(
@@ -48,7 +47,6 @@ export default function Stats({ library }: { library: any[] }) {
 
   return (
     <div className="w-full flex flex-col gap-8">
-      {/* Cards de Números */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div className={cardClass}>
           <span className="text-gray-500 dark:text-gray-400 font-bold mb-2">Total Games</span>
@@ -70,7 +68,6 @@ export default function Stats({ library }: { library: any[] }) {
         </div>
       </div>
 
-      {/* Secção de Favoritos (5 Estrelas) */}
       {stats.favorites.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-extrabold mb-6 text-gray-700 dark:text-gray-200 px-2 border-l-4 border-yellow-500">

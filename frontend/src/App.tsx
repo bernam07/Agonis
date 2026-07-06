@@ -26,6 +26,8 @@ import PrivacyPolicy from './components/PrivacyPolicy'
 import Notifications from './components/Notifications'
 import LandingPage from './components/LandingPage'
 import FAQ from './components/FAQ'
+import { AnimatePresence } from 'framer-motion'
+import PageTransition from './components/PageTransition'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -36,7 +38,24 @@ export default function App() {
   const [globalLibrary, setGlobalLibrary] = useState<any[]>([])
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
 
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('agonis_theme') as 'dark' | 'light') || 'dark'
+  })
+
+  const refreshLibrary = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase.from('user_games').select('*').eq('user_id', user.id)
+
+    if (data) setGlobalLibrary(data)
+  }
+
+  useEffect(() => {
+    if (session) refreshLibrary()
+  }, [session])
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -81,7 +100,11 @@ export default function App() {
   }
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+    setTheme((prev) => {
+      const newTheme = prev === 'dark' ? 'light' : 'dark'
+      localStorage.setItem('agonis_theme', newTheme)
+      return newTheme
+    })
   }
 
   return (
@@ -150,24 +173,54 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-4 flex-1 w-full">
-        {activeTab === 'feed' && <Feed library={globalLibrary} onUserClick={goToProfile} />}
-        {activeTab === 'search' && <GameSearch />}
-        {activeTab === 'library' && (
-          <MyLibrary library={globalLibrary} setLibrary={setGlobalLibrary} />
-        )}
-        {activeTab === 'profile' && (
-          <Profile
-            userId={viewedUserId}
-            onBack={() => {
-              setActiveTab('feed')
-              setViewedUserId(null)
-            }}
-            onUserClick={goToProfile}
-          />
-        )}
-        {activeTab === 'policy' && <PrivacyPolicy />}
-        {activeTab === 'faq' && <FAQ />}
+      <main className="max-w-5xl mx-auto px-4 flex-1 w-full flex">
+        <AnimatePresence mode="wait">
+          {activeTab === 'feed' && (
+            <PageTransition keyProp="feed">
+              <Feed
+                library={globalLibrary}
+                onUserClick={goToProfile}
+                onRefreshLibrary={refreshLibrary}
+              />
+            </PageTransition>
+          )}
+          {activeTab === 'search' && (
+            <PageTransition keyProp="search">
+              <GameSearch
+                onUserClick={goToProfile}
+                library={globalLibrary}
+                onRefreshLibrary={refreshLibrary}
+              />
+            </PageTransition>
+          )}
+          {activeTab === 'library' && (
+            <PageTransition keyProp="library">
+              <MyLibrary library={globalLibrary} setLibrary={setGlobalLibrary} />
+            </PageTransition>
+          )}
+          {activeTab === 'profile' && (
+            <PageTransition keyProp="profile">
+              <Profile
+                userId={viewedUserId}
+                onBack={() => {
+                  setActiveTab('feed')
+                  setViewedUserId(null)
+                }}
+                onUserClick={goToProfile}
+              />
+            </PageTransition>
+          )}
+          {activeTab === 'policy' && (
+            <PageTransition keyProp="policy">
+              <PrivacyPolicy />
+            </PageTransition>
+          )}
+          {activeTab === 'faq' && (
+            <PageTransition keyProp="faq">
+              <FAQ />
+            </PageTransition>
+          )}
+        </AnimatePresence>
       </main>
 
       <Footer

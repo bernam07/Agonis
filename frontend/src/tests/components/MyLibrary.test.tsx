@@ -1,6 +1,18 @@
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(),
+    },
+    from: vi.fn(),
+    functions: {
+      invoke: vi.fn(),
+    },
+  },
+}))
+
 vi.mock('../../components/GameModal', () => ({
   default: () => <div data-testid="game-modal" />,
 }))

@@ -19,6 +19,7 @@ import { supabase } from '../../lib/supabase'
 import SharePostModal from './SharePostModal'
 import GameModal from '../game/GameModal'
 import { PostSkeleton } from '../common/Skeletons'
+import { Trash2, AlertTriangle } from 'lucide-react'
 
 export default function Feed({
   library,
@@ -83,7 +84,7 @@ export default function Feed({
       `
       )
       .order('created_at', { ascending: false })
-      .range(from, to) // Limita a pesquisa
+      .range(from, to)
 
     if (error) {
       console.error(error)
@@ -100,21 +101,20 @@ export default function Feed({
         commentsCount: post.comments?.length || 0,
         comments: post.comments || [],
       }))
-      
+
       if (pageNum === 0) {
         setPosts(processedPosts)
       } else {
         setPosts((prev) => [...prev, ...processedPosts])
       }
-      
+
       setHasMore(data.length === POSTS_PER_PAGE)
       setPage(pageNum)
     }
-    
+
     setLoadingPosts(false)
     setLoadingMore(false)
   }
-
 
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -513,7 +513,7 @@ export default function Feed({
                       className="text-zinc-600 hover:text-rose-500 transition-colors p-1"
                       title="Delete Post"
                     >
-                      🗑️
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   )}
                 </div>
@@ -521,16 +521,16 @@ export default function Feed({
                 {post.game_name && (
                   <div
                     onClick={() => handleGameClick(post)}
-                    className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 w-max pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
+                    className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 max-w-full pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
                   >
                     {post.game_cover && (
                       <img
                         src={post.game_cover.replace('t_thumb', 't_cover_small')}
                         alt={post.game_name}
-                        className="w-8 h-10 object-cover rounded-md"
+                        className="w-8 h-10 object-cover rounded-md shrink-0"
                       />
                     )}
-                    <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors">
+                    <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors truncate min-w-0">
                       {post.game_name}
                     </span>
                   </div>
@@ -538,7 +538,7 @@ export default function Feed({
 
                 {isSpoiler ? (
                   <div className="bg-zinc-950/80 border border-amber-500/30 rounded-xl p-6 text-center my-3 backdrop-blur-sm">
-                    <span className="text-amber-500 text-2xl block mb-2">⚠️</span>
+                    <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
                     <h4 className="text-amber-500 font-bold text-sm mb-2">Spoiler Warning</h4>
                     <p className="text-zinc-400 text-xs mb-4">This post contains story spoilers.</p>
                     <button

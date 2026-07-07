@@ -33,7 +33,6 @@ export default function SharePostModal({ post, onClose }: any) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
       <div className="w-full max-w-sm flex flex-col gap-4">
-        {/* O Card que será exportado */}
         <div
           ref={cardRef}
           className="bg-zinc-900 border border-zinc-800 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden"

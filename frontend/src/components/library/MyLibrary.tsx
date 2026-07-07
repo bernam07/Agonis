@@ -17,6 +17,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import GameModal from '../game/GameModal'
+import { Star } from 'lucide-react'
 
 export default function MyLibrary({
   library,
@@ -122,9 +123,15 @@ export default function MyLibrary({
                 {game.name}
               </h3>
 
-              <div className="flex justify-center text-amber-400 text-xs mt-auto">
-                {'★'.repeat(game.rating || 0)}
-                {'☆'.repeat(5 - (game.rating || 0))}
+              <div className="flex justify-center gap-0.5 text-amber-400 mt-auto">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className="w-3 h-3"
+                    fill={game.rating >= star ? 'currentColor' : 'none'}
+                    strokeWidth={game.rating >= star ? 0 : 2}
+                  />
+                ))}
               </div>
             </div>
           ))}

@@ -14,7 +14,48 @@
    limitations under the License.
 */
 
+import { useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
+import { Library, Star, Users } from 'lucide-react'
+import Footer from './Footer' // Ajusta o caminho se o Footer estiver noutra pasta
+import PrivacyPolicy from '../legal/PrivacyPolicy' // Ajusta o caminho para a tua PrivacyPolicy
+import FAQ from '../legal/FAQ'
+
 export default function LandingPage({ onStart }: { onStart: () => void }) {
+  const [currentView, setCurrentView] = useState<'landing' | 'policy' | 'faq'>('landing')
+
+  if (currentView === 'policy') {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white p-6 flex flex-col items-center pt-12">
+        <div className="w-full max-w-3xl">
+          <button
+            onClick={() => setCurrentView('landing')}
+            className="flex items-center gap-2 text-sm font-bold text-zinc-400 hover:text-white mb-8 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </button>
+          <PrivacyPolicy />
+        </div>
+      </div>
+    )
+  }
+
+  if (currentView === 'faq') {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white p-6 flex flex-col items-center pt-12">
+        <div className="w-full max-w-3xl">
+          <button
+            onClick={() => setCurrentView('landing')}
+            className="flex items-center gap-2 text-sm font-bold text-zinc-400 hover:text-white mb-8 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </button>
+          <FAQ />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-indigo-500/30 flex flex-col">
       <nav className="border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-50">
@@ -51,7 +92,9 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full mt-32 text-left">
           <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl">
-            <div className="text-3xl mb-4">📚</div>
+            <div className="mb-4 text-indigo-400">
+              <Library className="w-8 h-8" />
+            </div>
             <h3 className="text-xl font-bold text-white mb-2">Build your Library</h3>
             <p className="text-zinc-400 text-sm leading-relaxed">
               Search a massive database to log what you've played. Organize your backlog, current
@@ -60,7 +103,9 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           </div>
 
           <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl">
-            <div className="text-3xl mb-4">⭐</div>
+            <div className="mb-4 text-amber-400">
+              <Star className="w-8 h-8" fill="currentColor" />
+            </div>
             <h3 className="text-xl font-bold text-white mb-2">Rate & Review</h3>
             <p className="text-zinc-400 text-sm leading-relaxed">
               Score games out of 5 stars, write your thoughts, and showcase your absolute
@@ -69,7 +114,9 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           </div>
 
           <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl">
-            <div className="text-3xl mb-4">🤝</div>
+            <div className="mb-4 text-emerald-400">
+              <Users className="w-8 h-8" />
+            </div>
             <h3 className="text-xl font-bold text-white mb-2">Social Feed</h3>
             <p className="text-zinc-400 text-sm leading-relaxed">
               Follow friends, like posts, and tag specific games in your updates. Export beautiful
@@ -79,23 +126,8 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
         </div>
       </main>
 
-      <footer className="py-8 border-t border-zinc-800/50 text-center">
-        <p className="text-zinc-600 text-xs font-medium mb-2">
-          Game data and artwork provided by{' '}
-          <a
-            href="https://www.igdb.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-indigo-400 hover:text-indigo-300"
-          >
-            IGDB.com
-          </a>
-          .
-        </p>
-        <p className="text-zinc-700 text-[10px] uppercase tracking-widest">
-          © {new Date().getFullYear()} Agonis
-        </p>
-      </footer>
+      <Footer onNavigate={(tab) => setCurrentView(tab as any)}
+      showKofi={false} />
     </div>
   )
 }

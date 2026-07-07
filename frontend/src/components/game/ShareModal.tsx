@@ -17,6 +17,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { toPng } from 'html-to-image'
 import { supabase } from '../../lib/supabase'
+import { Star } from 'lucide-react'
 
 export default function ShareModal({ game, userGame, onClose }: any) {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -82,9 +83,15 @@ export default function ShareModal({ game, userGame, onClose }: any) {
 
             <div>
               <h2 className="text-2xl font-black text-white leading-tight mb-1">{game.name}</h2>
-              <div className="flex justify-center text-amber-400 text-lg">
-                {'★'.repeat(userGame.rating || 0)}
-                {'☆'.repeat(5 - (userGame.rating || 0))}
+              <div className="flex justify-center gap-1 text-amber-400 mt-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className="w-5 h-5"
+                    fill={userGame.rating >= star ? 'currentColor' : 'none'}
+                    strokeWidth={userGame.rating >= star ? 0 : 2}
+                  />
+                ))}
               </div>
             </div>
 

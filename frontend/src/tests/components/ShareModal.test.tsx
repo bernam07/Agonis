@@ -1,7 +1,7 @@
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-const { toPngMock, profilesSingleMock, supabaseMock } = vi.hoisted(() => {
+const { toPngMock, supabaseMock } = vi.hoisted(() => {
   const toPngMock = vi.fn().mockResolvedValue('data:image/png;base64,stub')
   const profilesSingleMock = vi.fn().mockResolvedValue({ data: { username: 'bernam07' }, error: null })
 
@@ -15,7 +15,7 @@ const { toPngMock, profilesSingleMock, supabaseMock } = vi.hoisted(() => {
     })),
   }
 
-  return { toPngMock, profilesSingleMock, supabaseMock }
+  return { toPngMock, supabaseMock }
 })
 
 vi.mock('../../lib/supabase', () => ({

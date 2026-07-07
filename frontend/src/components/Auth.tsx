@@ -83,6 +83,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
 
           <div className="flex flex-col gap-3 mt-4">
             <button
+              type="button"
               onClick={handleLogin}
               disabled={loading}
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm shadow-lg shadow-indigo-600/10"
@@ -90,6 +91,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
               {loading ? 'Connecting...' : 'Sign In'}
             </button>
             <button
+              type="button"
               onClick={handleSignUp}
               disabled={loading}
               className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm border border-zinc-700"

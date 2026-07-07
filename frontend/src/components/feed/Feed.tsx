@@ -521,16 +521,16 @@ export default function Feed({
                 {post.game_name && (
                   <div
                     onClick={() => handleGameClick(post)}
-                    className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 w-max pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
+                    className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 max-w-full pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
                   >
                     {post.game_cover && (
                       <img
                         src={post.game_cover.replace('t_thumb', 't_cover_small')}
                         alt={post.game_name}
-                        className="w-8 h-10 object-cover rounded-md"
+                        className="w-8 h-10 object-cover rounded-md shrink-0"
                       />
                     )}
-                    <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors">
+                    <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors truncate min-w-0">
                       {post.game_name}
                     </span>
                   </div>

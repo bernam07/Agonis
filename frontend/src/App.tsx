@@ -48,9 +48,33 @@ export default function App() {
     } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data } = await supabase.from('user_games').select('*').eq('user_id', user.id)
+    const { data, error } = await supabase
+      .from('user_games')
+      .select(
+        `
+        *,
+        list_games (
+          game_name,
+          game_cover
+        )
+      `
+      )
+      .eq('user_id', user.id)
 
-    if (data) setGlobalLibrary(data)
+    if (error) {
+      console.error('Erro a carregar biblioteca:', error)
+      return
+    }
+
+    if (data) {
+      const formattedLibrary = data.map((item: any) => ({
+        ...item,
+        game_name: item.list_games?.game_name,
+        game_cover: item.list_games?.game_cover,
+      }))
+
+      setGlobalLibrary(formattedLibrary)
+    }
   }
 
   useEffect(() => {

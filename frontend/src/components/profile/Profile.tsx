@@ -17,6 +17,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import GameModal from '../game/GameModal'
+import { Trophy, Star, Users, Flame, Lock, Trash2, AlertTriangle } from 'lucide-react'
 
 export default function Profile({
   userId,
@@ -450,18 +451,34 @@ export default function Profile({
 
   const renderBadges = () => {
     const badges = []
-    
+
     if (libStats.completed >= 5) {
-      badges.push({ icon: '🏆', name: 'Completionist', desc: 'Completed 5+ games' })
+      badges.push({
+        icon: <Trophy className="w-5 h-5 text-yellow-500" />,
+        name: 'Completionist',
+        desc: 'Completed 5+ games',
+      })
     }
     if (libStats.favorites.length >= 3) {
-      badges.push({ icon: '⭐', name: 'Tastemaker', desc: '3+ Masterpieces' })
+      badges.push({
+        icon: <Star className="w-5 h-5 text-amber-400" fill="currentColor" />,
+        name: 'Tastemaker',
+        desc: '3+ Masterpieces',
+      })
     }
     if (followersCount >= 10) {
-      badges.push({ icon: '🦋', name: 'Social Butterfly', desc: '10+ Followers' })
+      badges.push({
+        icon: <Users className="w-5 h-5 text-blue-400" />,
+        name: 'Social Butterfly',
+        desc: '10+ Followers',
+      })
     }
     if (libStats.total >= 20) {
-      badges.push({ icon: '🔥', name: 'Veteran', desc: '20+ Games Tracked' })
+      badges.push({
+        icon: <Flame className="w-5 h-5 text-orange-500" fill="currentColor" />,
+        name: 'Veteran',
+        desc: '20+ Games Tracked',
+      })
     }
 
     if (badges.length === 0) return null
@@ -652,8 +669,8 @@ export default function Profile({
             <span className="text-4xl font-black text-emerald-400">{libStats.completed}</span>
           </div>
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-12 text-center w-full max-w-lg mx-auto flex flex-col items-center">
-            <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-3xl mb-4">
-              🔒
+            <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 mb-4">
+              <Lock className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-black text-white mb-2">This profile is private</h3>
             <p className="text-zinc-400 text-sm font-medium">
@@ -663,7 +680,7 @@ export default function Profile({
         </div>
       ) : (
         <>
-        {renderBadges()}
+          {renderBadges()}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <button
               onClick={() => setViewMode('library')}
@@ -684,9 +701,9 @@ export default function Profile({
             </div>
             <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
               <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Avg Rating</span>
-              <span className="text-3xl font-black text-yellow-500 flex items-center gap-1">
+              <span className="text-3xl font-black text-yellow-500 flex items-center gap-1.5">
                 {libStats.averageRating}
-                <span className="text-xl pb-1">★</span>
+                <Star className="w-6 h-6 text-yellow-500" fill="currentColor" />
               </span>
             </div>
           </div>
@@ -856,7 +873,7 @@ export default function Profile({
                               className="absolute top-4 right-4 text-zinc-600 hover:text-rose-500 transition-colors"
                               title="Delete Post"
                             >
-                              🗑️
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           )}
 
@@ -868,7 +885,7 @@ export default function Profile({
 
                           {isSpoiler ? (
                             <div className="bg-zinc-950/80 border border-amber-500/30 rounded-xl p-6 text-center my-3 backdrop-blur-sm">
-                              <span className="text-amber-500 text-2xl block mb-2">⚠️</span>
+                              <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
                               <h4 className="text-amber-500 font-bold text-sm mb-2">
                                 Spoiler Warning
                               </h4>
@@ -1069,9 +1086,9 @@ export default function Profile({
                             {isCurrentUser && (
                               <button
                                 onClick={() => handleDeleteList(list.id)}
-                                className="text-zinc-600 hover:text-rose-500 transition-colors p-1 text-xs"
+                                className="text-zinc-600 hover:text-rose-500 transition-colors p-1"
                               >
-                                🗑️
+                                <Trash2 className="w-5 h-5" />
                               </button>
                             )}
                             <span className="text-zinc-500 text-xs font-bold">

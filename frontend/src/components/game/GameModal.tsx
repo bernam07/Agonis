@@ -17,6 +17,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import ShareModal from './ShareModal'
+import { Star } from 'lucide-react'
 
 const STATUSES = [
   { id: 'backlog', label: 'Backlog' },
@@ -288,7 +289,10 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
                   onClick={() => setRating(star)}
                   className={`text-2xl transition-transform hover:scale-110 ${rating >= star ? 'text-amber-400' : 'text-zinc-700'}`}
                 >
-                  ★
+                  <Star 
+                    className="w-6 h-6" 
+                    fill={rating >= star ? "currentColor" : "none"} 
+                  />
                 </button>
               ))}
             </div>
@@ -557,9 +561,15 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
                                 </span>
                               </div>
                               {rev.rating > 0 && (
-                                <div className="text-amber-400 text-xs font-bold bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
-                                  {'★'.repeat(rev.rating)}
-                                  {'☆'.repeat(5 - rev.rating)}
+                                <div className="flex items-center gap-0.5 text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star 
+                                      key={star} 
+                                      className="w-3 h-3" 
+                                      fill={rev.rating >= star ? "currentColor" : "none"}
+                                      strokeWidth={rev.rating >= star ? 0 : 2} 
+                                    />
+                                  ))}
                                 </div>
                               )}
                             </div>

@@ -14,11 +14,16 @@
    limitations under the License.
 */
 
-export default function Footer({ onNavigate }: { onNavigate: (tab: string) => void }) {
+import { Coffee } from 'lucide-react'
+
+export default function Footer({ onNavigate, showKofi = true }: { onNavigate: (tab: string) => void; showKofi?: boolean }) {
   return (
     <footer className="mt-16 py-10 border-t border-zinc-800/50 flex flex-col items-center">
+      {showKofi && (
       <div className="mb-8 p-6 bg-zinc-900 border border-zinc-800 rounded-2xl max-w-sm w-full text-center">
-        <h3 className="text-white font-bold mb-2">Support Agonis ☕</h3>
+        <h3 className="text-white font-bold mb-2 flex items-center justify-center gap-2">
+          Support Agonis <Coffee className="w-5 h-5 text-amber-600" />
+        </h3>
         <p className="text-zinc-400 text-xs font-medium mb-4">
           Agonis is built and maintained by a solo developer. If you enjoy tracking your games here,
           consider buying me a coffee to keep the servers running!
@@ -32,6 +37,7 @@ export default function Footer({ onNavigate }: { onNavigate: (tab: string) => vo
           Donate
         </a>
       </div>
+      )}
 
       <div className="flex justify-center gap-6 text-xs font-bold text-zinc-500 mb-6">
         <button onClick={() => onNavigate('faq')} className="hover:text-zinc-300 transition-colors">
@@ -45,14 +51,6 @@ export default function Footer({ onNavigate }: { onNavigate: (tab: string) => vo
         </button>
         <a href="mailto:contact@agonis.gg" className="hover:text-zinc-300 transition-colors">
           Contact Us
-        </a>
-        <a
-          href="https://github.com/bernam07/Agonis"
-          target="_blank"
-          rel="noreferrer"
-          className="hover:text-zinc-300 transition-colors"
-        >
-          GitHub
         </a>
       </div>
 

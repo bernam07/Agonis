@@ -41,6 +41,7 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('agonis_theme') as 'dark' | 'light') || 'dark'
   })
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const refreshLibrary = async () => {
     const {
@@ -127,6 +128,13 @@ export default function App() {
   const goToProfile = (userId: string) => {
     setViewedUserId(userId)
     setActiveTab('profile')
+    setMobileMenuOpen(false)
+  }
+
+  const goToTab = (tab: typeof activeTab) => {
+    setActiveTab(tab)
+    setViewedUserId(null)
+    setMobileMenuOpen(false)
   }
 
   const toggleTheme = () => {
@@ -139,51 +147,28 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-sans selection:bg-indigo-500/30 flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
-      <nav className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 mb-8 transition-colors duration-300">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-black tracking-tighter text-indigo-600 dark:text-white">
+      <nav className="sticky top-0 z-40 w-full max-w-[100vw] overflow-x-clip bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 mb-8 transition-colors duration-300">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-2">
+          <h1 className="text-xl font-black tracking-tighter text-indigo-600 dark:text-white shrink-0">
             AGONIS
           </h1>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                setActiveTab('feed')
-                setViewedUserId(null)
-              }}
-              className={navItemClass('feed')}
-            >
+
+          <div className="hidden md:flex items-center gap-1 min-w-0">
+            <button onClick={() => goToTab('feed')} className={navItemClass('feed')}>
               Feed
             </button>
-            <button
-              onClick={() => {
-                setActiveTab('search')
-                setViewedUserId(null)
-              }}
-              className={navItemClass('search')}
-            >
+            <button onClick={() => goToTab('search')} className={navItemClass('search')}>
               Discover
             </button>
-            <button
-              onClick={() => {
-                setActiveTab('library')
-                setViewedUserId(null)
-              }}
-              className={navItemClass('library')}
-            >
+            <button onClick={() => goToTab('library')} className={navItemClass('library')}>
               Library
             </button>
-            <button
-              onClick={() => {
-                setActiveTab('profile')
-                setViewedUserId(null)
-              }}
-              className={navItemClass('profile')}
-            >
+            <button onClick={() => goToTab('profile')} className={navItemClass('profile')}>
               Profile
             </button>
+          </div>
 
-            <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-800 mx-2"></div>
-
+          <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={toggleTheme}
               className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
@@ -193,17 +178,62 @@ export default function App() {
 
             <Notifications onUserClick={goToProfile} />
 
+            <div className="hidden md:block w-px h-4 bg-zinc-300 dark:bg-zinc-800 mx-1"></div>
+
             <button
               onClick={() => supabase.auth.signOut()}
-              className="text-xs font-semibold text-rose-500 hover:text-rose-400 px-3 py-2 ml-1"
+              className="hidden md:inline text-xs font-semibold text-rose-500 hover:text-rose-400 px-3 py-2 ml-1"
+            >
+              Log out
+            </button>
+
+            <button
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label="Abrir menu"
+              aria-expanded={mobileMenuOpen}
+              className="md:hidden p-2 -mr-2 text-zinc-600 dark:text-zinc-300"
+            >
+              <div className="w-5 flex flex-col gap-1.5">
+                <span
+                  className={`h-0.5 w-full bg-current transition-transform duration-200 ${mobileMenuOpen ? 'translate-y-2 rotate-45' : ''}`}
+                ></span>
+                <span
+                  className={`h-0.5 w-full bg-current transition-opacity duration-200 ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}
+                ></span>
+                <span
+                  className={`h-0.5 w-full bg-current transition-transform duration-200 ${mobileMenuOpen ? '-translate-y-2 -rotate-45' : ''}`}
+                ></span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-zinc-200 dark:border-zinc-800 px-4 py-3 flex flex-col gap-1 bg-white/95 dark:bg-zinc-950/95">
+            <button onClick={() => goToTab('feed')} className={`${navItemClass('feed')} text-left`}>
+              Feed
+            </button>
+            <button onClick={() => goToTab('search')} className={`${navItemClass('search')} text-left`}>
+              Discover
+            </button>
+            <button onClick={() => goToTab('library')} className={`${navItemClass('library')} text-left`}>
+              Library
+            </button>
+            <button onClick={() => goToTab('profile')} className={`${navItemClass('profile')} text-left`}>
+              Profile
+            </button>
+            <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="text-sm font-semibold text-rose-500 hover:text-rose-400 px-4 py-2 text-left"
             >
               Log out
             </button>
           </div>
-        </div>
+        )}
       </nav>
 
-      <main className="max-w-5xl mx-auto px-4 flex-1 w-full flex">
+      <main className="max-w-5xl mx-auto px-4 flex-1 w-full flex min-w-0">
         <AnimatePresence mode="wait">
           {activeTab === 'feed' && (
             <PageTransition keyProp="feed">

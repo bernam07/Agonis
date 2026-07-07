@@ -48,18 +48,7 @@ export default function App() {
     } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data, error } = await supabase
-      .from('user_games')
-      .select(
-        `
-        *,
-        list_games (
-          game_name,
-          game_cover
-        )
-      `
-      )
-      .eq('user_id', user.id)
+    const { data, error } = await supabase.from('user_games').select('*').eq('user_id', user.id)
 
     if (error) {
       console.error('Erro a carregar biblioteca:', error)
@@ -67,13 +56,30 @@ export default function App() {
     }
 
     if (data) {
+      if (data.length === 0) {
+        setGlobalLibrary([])
+        return
+      }
+
+      const gameIds = [...new Set(data.map((item: any) => item.igdb_id).filter(Boolean))]
+      const { data: igdbGames, error: igdbError } = await supabase.functions.invoke('fetch-games', {
+        body: { gameIds },
+      })
+
+      if (igdbError) {
+        console.error('Erro a carregar metadados da IGDB:', igdbError)
+        setGlobalLibrary(data)
+        return
+      }
+
       const formattedLibrary = data.map((item: any) => ({
         ...item,
-        game_name: item.list_games?.game_name,
-        game_cover: item.list_games?.game_cover,
+        ...(igdbGames?.find((g: any) => g.id === item.igdb_id) ?? {}),
       }))
 
-      setGlobalLibrary(formattedLibrary)
+      setGlobalLibrary(
+        formattedLibrary.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      )
     }
   }
 

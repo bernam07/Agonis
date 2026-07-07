@@ -1,5 +1,5 @@
 import { act } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { supabaseMock } = vi.hoisted(() => {
   const searchInvokeMock = vi.fn((functionName: string, payload?: { body?: { searchQuery?: string } }) => {

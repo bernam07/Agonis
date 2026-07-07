@@ -10,13 +10,8 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-
     env:
-      CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-      CODACY_ORGANIZATION_PROVIDER: gh
-      CODACY_USERNAME: bernam07
-      CODACY_PROJECT_NAME: Agonis
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
     defaults:
       run:
@@ -39,10 +34,15 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage
 
+      - name: Check coverage file
+        run: test -f coverage/lcov.info
+
       - name: Upload your coverage reports
-        if: ${{ env.CODACY_API_TOKEN != '' }}
-        run: |
-          bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage/lcov.info
+        if: env.CODACY_PROJECT_TOKEN != ''
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ env.CODACY_PROJECT_TOKEN }}
+          coverage-reports: frontend/coverage/lcov.info
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4

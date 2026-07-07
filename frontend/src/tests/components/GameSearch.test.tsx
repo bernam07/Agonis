@@ -51,11 +51,11 @@ vi.mock('../../lib/supabase', () => ({
   supabase: supabaseMock,
 }))
 
-vi.mock('../../components/GameModal', () => ({
+vi.mock('../../components/game/GameModal', () => ({
   default: () => <div data-testid="game-modal" />,
 }))
 
-import GameSearch from '../../components/GameSearch'
+import GameSearch from '../../components/game/GameSearch'
 import { renderIntoDocument } from '../testUtils'
 
 describe('GameSearch', () => {

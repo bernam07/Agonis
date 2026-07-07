@@ -15,8 +15,8 @@
 */
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import GameModal from './GameModal'
+import { supabase } from '../../lib/supabase'
+import GameModal from '../game/GameModal'
 
 export default function MyLibrary({
   library,

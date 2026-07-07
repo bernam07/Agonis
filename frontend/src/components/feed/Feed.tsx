@@ -15,10 +15,10 @@
 */
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import SharePostModal from './SharePostModal'
-import GameModal from './GameModal'
-import { PostSkeleton } from './Skeletons'
+import GameModal from '../game/GameModal'
+import { PostSkeleton } from '../common/Skeletons'
 
 export default function Feed({
   library,

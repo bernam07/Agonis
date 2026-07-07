@@ -15,7 +15,7 @@
 */
 
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 export default function Auth({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState('')

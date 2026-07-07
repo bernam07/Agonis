@@ -71,7 +71,7 @@ vi.mock('../../lib/supabase', () => ({
   supabase: supabaseMock,
 }))
 
-import Notifications from '../../components/Notifications'
+import Notifications from '../../components/notifications/Notifications'
 import { renderIntoDocument } from '../testUtils'
 
 describe('Notifications', () => {

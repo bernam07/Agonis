@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { GameSkeleton, PostSkeleton } from '../../components/Skeletons'
+import { GameSkeleton, PostSkeleton } from '../../components/common/Skeletons'
 import { renderIntoDocument } from '../testUtils'
 
 describe('Skeletons', () => {

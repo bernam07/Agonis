@@ -15,8 +15,8 @@
 */
 
 import { useState, useEffect, useMemo } from 'react'
-import { supabase } from '../lib/supabase'
-import GameModal from './GameModal'
+import { supabase } from '../../lib/supabase'
+import GameModal from '../game/GameModal'
 
 export default function Profile({
   userId,

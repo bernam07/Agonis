@@ -14,7 +14,7 @@ vi.mock('../../lib/supabase', () => ({
   },
 }))
 
-import Auth from '../../components/Auth'
+import Auth from '../../components/auth/Auth'
 import { renderIntoDocument } from '../testUtils'
 
 describe('Auth', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import FAQ from '../../components/FAQ'
+import FAQ from '../../components/legal/FAQ'
 import { renderIntoDocument } from '../testUtils'
 
 describe('FAQ', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import PageTransition from '../../components/PageTransition'
+import PageTransition from '../../components/common/PageTransition'
 import { renderIntoDocument } from '../testUtils'
 
 describe('PageTransition', () => {

@@ -1,6 +1,6 @@
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import SharePostModal from '../../components/SharePostModal'
+import SharePostModal from '../../components/feed/SharePostModal'
 import { renderIntoDocument } from '../testUtils'
 
 const { toPngMock } = vi.hoisted(() => ({

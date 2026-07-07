@@ -220,11 +220,18 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
     if (user && igdbId) {
       const completedDate =
         status === 'completed' || status === '100_percent'
           ? userGame?.completed_at || new Date().toISOString()
           : null
+
+      await supabase.from('list_games').upsert({
+        id: igdbId,
+        game_name: game.name || game.game_name,
+        game_cover: game.cover?.url || game.game_cover || null,
+      })
 
       await supabase.from('user_games').upsert(
         {

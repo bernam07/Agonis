@@ -15,9 +15,9 @@
 */
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import GameModal from './GameModal'
-import { GameSkeleton } from './Skeletons'
+import { GameSkeleton } from '../common/Skeletons'
 
 export default function GameSearch({ 
   onUserClick, 

@@ -16,7 +16,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { toPng } from 'html-to-image'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 export default function ShareModal({ game, userGame, onClose }: any) {
   const cardRef = useRef<HTMLDivElement>(null)

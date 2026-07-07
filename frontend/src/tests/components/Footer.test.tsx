@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import Footer from '../../components/Footer'
+import Footer from '../../components/common/Footer'
 import { renderIntoDocument } from '../testUtils'
 
 describe('Footer', () => {

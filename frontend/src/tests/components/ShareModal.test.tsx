@@ -26,7 +26,7 @@ vi.mock('html-to-image', () => ({
   toPng: toPngMock,
 }))
 
-import ShareModal from '../../components/ShareModal'
+import ShareModal from '../../components/game/ShareModal'
 import { renderIntoDocument } from '../testUtils'
 
 describe('ShareModal', () => {

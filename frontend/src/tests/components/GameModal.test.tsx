@@ -116,11 +116,11 @@ vi.mock('../../lib/supabase', () => ({
   supabase: supabaseMock,
 }))
 
-vi.mock('../../components/ShareModal', () => ({
+vi.mock('../../components/game/ShareModal', () => ({
   default: () => <div data-testid="share-modal" />,
 }))
 
-import GameModal from '../../components/GameModal'
+import GameModal from '../../components/game/GameModal'
 import { renderIntoDocument } from '../testUtils'
 
 const game = {

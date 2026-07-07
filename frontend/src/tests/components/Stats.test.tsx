@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import Stats from '../../components/Stats'
+import Stats from '../../components/library/Stats'
 import { renderIntoDocument } from '../testUtils'
 
 describe('Stats', () => {

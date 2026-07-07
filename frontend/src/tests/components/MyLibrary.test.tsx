@@ -13,11 +13,11 @@ vi.mock('../../lib/supabase', () => ({
   },
 }))
 
-vi.mock('../../components/GameModal', () => ({
+vi.mock('../../components/game/GameModal', () => ({
   default: () => <div data-testid="game-modal" />,
 }))
 
-import MyLibrary from '../../components/MyLibrary'
+import MyLibrary from '../../components/library/MyLibrary'
 import { renderIntoDocument } from '../testUtils'
 
 describe('MyLibrary', () => {

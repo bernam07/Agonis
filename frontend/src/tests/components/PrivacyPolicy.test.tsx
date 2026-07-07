@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import PrivacyPolicy from '../../components/PrivacyPolicy'
+import PrivacyPolicy from '../../components/legal/PrivacyPolicy'
 import { renderIntoDocument } from '../testUtils'
 
 describe('PrivacyPolicy', () => {

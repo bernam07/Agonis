@@ -1,7 +1,7 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it } from 'vitest'
-import LandingPage from '../../components/LandingPage'
+import LandingPage from '../../components/common/LandingPage'
 
 describe('LandingPage', () => {
   it('renders the main call to action', () => {

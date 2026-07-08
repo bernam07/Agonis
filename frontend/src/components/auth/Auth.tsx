@@ -22,7 +22,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  
+
   const [isResetting, setIsResetting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
@@ -31,7 +31,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
     e.preventDefault()
     setErrorMsg(null)
     setSuccessMsg(null)
-    
+
     if (!email || !password) {
       setErrorMsg('Please enter both email and password.')
       return
@@ -47,7 +47,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
     e.preventDefault()
     setErrorMsg(null)
     setSuccessMsg(null)
-    
+
     if (password.length < 6) {
       setErrorMsg('Password must be at least 6 characters long.')
       return
@@ -55,7 +55,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
 
     setLoading(true)
     const { error } = await supabase.auth.signUp({ email, password })
-    
+
     if (error) {
       setErrorMsg(error.message)
     } else {
@@ -78,7 +78,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin,
     })
-    
+
     if (error) {
       setErrorMsg(error.message)
     } else {
@@ -118,7 +118,10 @@ export default function Auth({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
-        <form className="flex flex-col gap-4">
+        <form
+          onSubmit={isResetting ? handleResetPassword : handleLogin}
+          className="flex flex-col gap-4"
+        >
           <div>
             <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">
               Email Address
@@ -126,7 +129,10 @@ export default function Auth({ onBack }: { onBack: () => void }) {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                if (errorMsg) setErrorMsg(null)
+              }}
               placeholder="name@example.com"
               className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
             />
@@ -140,7 +146,10 @@ export default function Auth({ onBack }: { onBack: () => void }) {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (errorMsg) setErrorMsg(null)
+                }}
                 placeholder="••••••••"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
               />
@@ -151,8 +160,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
             {isResetting ? (
               <>
                 <button
-                  type="button"
-                  onClick={handleResetPassword}
+                  type="submit"
                   disabled={loading}
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm shadow-lg shadow-indigo-600/10"
                 >
@@ -173,8 +181,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
             ) : (
               <>
                 <button
-                  type="button"
-                  onClick={handleLogin}
+                  type="submit"
                   disabled={loading}
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm shadow-lg shadow-indigo-600/10"
                 >

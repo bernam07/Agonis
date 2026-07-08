@@ -1169,6 +1169,7 @@ export default function Profile({
         <GameModal
           game={selectedGame.game}
           userGame={selectedGame.userGame}
+          isReadOnly={!!userId}
           onClose={() => setSelectedGame(null)}
           onRefresh={loadProfile}
         />

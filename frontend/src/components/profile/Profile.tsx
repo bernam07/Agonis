@@ -137,10 +137,10 @@ export default function Profile({
       .eq('user_id', targetId)
     if (gamesData && gamesData.length > 0) {
       const { data: igdbGames } = await supabase.functions.invoke('fetch-games', {
-        body: { gameIds: gamesData.map((g) => g.igdb_id) },
+        body: { gameIds: gamesData.map((g:any) => g.igdb_id) },
       })
       if (igdbGames) {
-        const combined = gamesData.map((dbGame) => ({
+        const combined = gamesData.map((dbGame:any) => ({
           ...dbGame,
           ...igdbGames.find((g: any) => Number(g.id) === Number(dbGame.igdb_id)),
         }))

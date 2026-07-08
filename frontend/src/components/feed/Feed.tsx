@@ -57,7 +57,7 @@ export default function Feed({
   const POSTS_PER_PAGE = 10
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(({ data: { user } }:any) => {
       setCurrentUser(user)
       fetchPosts(user?.id)
     })
@@ -94,7 +94,7 @@ export default function Feed({
     }
 
     if (data) {
-      const processedPosts = data.map((post) => ({
+      const processedPosts = data.map((post:any) => ({
         ...post,
         likesCount: post.likes.length,
         hasLiked: userId ? post.likes.some((like: any) => like.user_id === userId) : false,
@@ -175,8 +175,8 @@ export default function Feed({
         const { data: users } = await supabase.from('profiles').select('id').in('username', matches)
         if (users) {
           const mentionNotifs = users
-            .filter((u) => u.id !== currentUser.id)
-            .map((u) => ({
+            .filter((u:any) => u.id !== currentUser.id)
+            .map((u:any) => ({
               receiver_id: u.id,
               actor_id: currentUser.id,
               type: 'mention',
@@ -276,8 +276,8 @@ export default function Feed({
         const { data: users } = await supabase.from('profiles').select('id').in('username', matches)
         if (users) {
           const mentionNotifs = users
-            .filter((u) => u.id !== currentUser.id && u.id !== postAuthorId)
-            .map((u) => ({
+            .filter((u:any) => u.id !== currentUser.id && u.id !== postAuthorId)
+            .map((u:any) => ({
               receiver_id: u.id,
               actor_id: currentUser.id,
               type: 'mention',

@@ -115,14 +115,14 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
     }
 
     if (data) {
-      const ratedGames = data.filter((d) => d.rating && d.rating > 0)
+      const ratedGames = data.filter((d:any) => d.rating && d.rating > 0)
       const avg =
         ratedGames.length > 0
-          ? (ratedGames.reduce((acc, d) => acc + d.rating, 0) / ratedGames.length).toFixed(1)
+          ? (ratedGames.reduce((acc:any, d:any) => acc + d.rating, 0) / ratedGames.length).toFixed(1)
           : '0.0'
       setCommunityAvg(avg)
 
-      const withReviews = data.filter((d) => d.review && d.review.trim() !== '')
+      const withReviews = data.filter((d:any) => d.review && d.review.trim() !== '')
       setCommunityReviews(withReviews)
     }
 

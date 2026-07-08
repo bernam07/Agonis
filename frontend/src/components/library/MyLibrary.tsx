@@ -48,18 +48,18 @@ export default function MyLibrary({
       return
     }
 
-    const gameIds = userGames.map((g) => g.igdb_id)
+    const gameIds = userGames.map((g:any) => g.igdb_id)
     const { data: igdbGames } = await supabase.functions.invoke('fetch-games', {
       body: { gameIds },
     })
 
     if (igdbGames) {
-      const combined = userGames.map((dbGame) => ({
+      const combined = userGames.map((dbGame:any) => ({
         ...dbGame,
         ...igdbGames.find((g: any) => g.id === dbGame.igdb_id),
       }))
       setLibrary(
-        combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        combined.sort((a:any, b:any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       )
     }
     setLoading(false)

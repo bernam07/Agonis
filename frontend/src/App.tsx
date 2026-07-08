@@ -80,7 +80,7 @@ export default function App() {
       }))
 
       setGlobalLibrary(
-        formattedLibrary.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        formattedLibrary.sort((a:any, b:any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       )
     }
   }
@@ -98,10 +98,10 @@ export default function App() {
   }, [theme])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
+    supabase.auth.getSession().then(({ data: { session } }:any) => setSession(session))
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event:any, session:any) => {
       setSession(session)
       if (session) {
         setShowAuth(false)

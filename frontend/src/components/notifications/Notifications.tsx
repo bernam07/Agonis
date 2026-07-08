@@ -107,7 +107,7 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
 
     if (data) {
       setNotifications(data)
-      setUnreadCount(data.filter((n) => !n.is_read).length)
+      setUnreadCount(data.filter((n:any) => !n.is_read).length)
     }
   }
 

@@ -49,7 +49,7 @@ export default function Footer({ onNavigate, showKofi = true }: { onNavigate: (t
         >
           Privacy Policy
         </button>
-        <a href="mailto:contact@agonis.gg" className="hover:text-zinc-300 transition-colors">
+        <a href="mailto:contact@agonis.xyz" className="hover:text-zinc-300 transition-colors">
           Contact Us
         </a>
       </div>

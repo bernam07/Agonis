@@ -17,7 +17,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import ShareModal from './ShareModal'
-import { Star } from 'lucide-react'
+import { Star, Lock } from 'lucide-react'
 
 const STATUSES = [
   { id: 'backlog', label: 'Backlog' },
@@ -27,7 +27,7 @@ const STATUSES = [
   { id: '100_percent', label: '100%' },
 ]
 
-export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
+export default function GameModal({ game, userGame, onClose, onRefresh, isReadOnly = false }: any) {
   const [status, setStatus] = useState(userGame?.status || 'backlog')
   const [rating, setRating] = useState(userGame?.rating || 0)
   const [review, setReview] = useState(userGame?.review || '')
@@ -286,8 +286,9 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
+                  disabled={isReadOnly}
                   onClick={() => setRating(star)}
-                  className={`text-2xl transition-transform hover:scale-110 ${rating >= star ? 'text-amber-400' : 'text-zinc-700'}`}
+                  className={`text-2xl transition-transform ${!isReadOnly && 'hover:scale-110'} ${rating >= star ? 'text-amber-400' : 'text-zinc-700'}`}
                 >
                   <Star 
                     className="w-6 h-6" 
@@ -327,7 +328,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
         </div>
 
         <div className="min-h-[250px] max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-          {activeTab === 'track' && (
+          {activeTab === 'track' && !isReadOnly && (
             <div>
               <div className="mb-6">
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">
@@ -392,6 +393,16 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
                   className="w-full p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-200 outline-none resize-none text-sm font-medium focus:border-indigo-500 transition-colors shadow-inner"
                 />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'track' && isReadOnly && (
+            <div className="flex flex-col items-center justify-center h-48 text-center bg-zinc-950/50 rounded-2xl border border-zinc-800/50">
+              <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 mb-4">
+                <Lock className="w-8 h-8" />
+              </div>
+              <p className="text-zinc-400 text-sm font-bold">Viewing another user's log.</p>
+              <p className="text-zinc-600 text-xs mt-1">Editing is disabled.</p>
             </div>
           )}
 
@@ -605,6 +616,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
           >
             Close
           </button>
+          {!isReadOnly && (
           <div className="flex gap-3">
             {userGame && (
               <button
@@ -622,6 +634,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh }: any) {
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
+          )}
         </div>
       </div>
 

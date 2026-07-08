@@ -98,7 +98,10 @@ export default function GameSearch({
     }
 
     if (Array.isArray(data)) {
-      setResults(data)
+      const uniqueGames = data.filter((game: any, index: number, self: any[]) =>
+        index === self.findIndex((t) => t.id === game.id)
+      );
+      setResults(uniqueGames)
     } else {
       console.error('Erro da API:', data)
       setResults([])

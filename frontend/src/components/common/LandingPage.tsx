@@ -17,8 +17,8 @@
 import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { Library, Star, Users } from 'lucide-react'
-import Footer from './Footer' // Ajusta o caminho se o Footer estiver noutra pasta
-import PrivacyPolicy from '../legal/PrivacyPolicy' // Ajusta o caminho para a tua PrivacyPolicy
+import Footer from './Footer'
+import PrivacyPolicy from '../legal/PrivacyPolicy'
 import FAQ from '../legal/FAQ'
 
 export default function LandingPage({ onStart }: { onStart: () => void }) {

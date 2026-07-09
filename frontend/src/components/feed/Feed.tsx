@@ -229,6 +229,30 @@ export default function Feed({
     if (currentUser) fetchPosts(currentUser.id)
   }
 
+  const deleteComment = async (commentId: string, postId: string) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return
+
+    setPosts((currentPosts: any[]) => 
+      currentPosts.map((post) => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: post.comments.filter((c: any) => c.id !== commentId)
+          }
+        }
+        return post
+      })
+    )
+
+    const { error } = await supabase.from('comments').delete().eq('id', commentId)
+
+    if (error) {
+      console.error('Erro ao apagar:', error)
+      alert('Error deleting comment. It will reappear.')
+      fetchPosts(currentUser?.id, 0)
+    }
+  }
+
   const handleGameClick = (post: any) => {
     const trackedGame = library.find((g) => (g.igdb_id || g.id) === post.igdb_id)
 
@@ -614,10 +638,11 @@ export default function Feed({
                         post.comments.map((comment: any) => (
                           <div
                             key={comment.id}
-                            className="flex gap-3 items-start bg-zinc-950/40 p-3 rounded-xl border border-zinc-800/30"
+                            className="flex gap-3 items-start bg-zinc-100 dark:bg-zinc-950/40 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800/30"
                           >
+                            {/* AVATAR */}
                             <div
-                              className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden shrink-0 cursor-pointer"
+                              className="w-7 h-7 rounded-full bg-zinc-300 dark:bg-zinc-800 overflow-hidden shrink-0 cursor-pointer"
                               onClick={() => onUserClick(comment.profiles.id)}
                             >
                               {comment.profiles?.avatar_url ? (
@@ -626,27 +651,41 @@ export default function Feed({
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-zinc-400">
+                                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
                                   {comment.profiles?.username?.charAt(0).toUpperCase()}
                                 </div>
                               )}
                             </div>
+                            
+                            {/* CONTEÚDO DO COMENTÁRIO */}
                             <div className="flex-1">
-                              <div className="flex items-baseline gap-2">
-                                <span
-                                  className="text-xs font-bold text-zinc-200 cursor-pointer hover:text-indigo-400 transition-colors"
-                                  onClick={() => onUserClick(comment.profiles.id)}
-                                >
-                                  @{comment.profiles?.username}
-                                </span>
-                                <span className="text-[9px] text-zinc-600 font-medium">
-                                  {new Date(comment.created_at).toLocaleDateString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </span>
+                              <div className="flex justify-between items-start">
+                                <div className="flex items-baseline gap-2">
+                                  <span
+                                    className="text-xs font-bold text-zinc-900 dark:text-zinc-200 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                    onClick={() => onUserClick(comment.profiles.id)}
+                                  >
+                                    @{comment.profiles?.username}
+                                  </span>
+                                  <span className="text-[9px] text-zinc-500 dark:text-zinc-600 font-medium">
+                                    {new Date(comment.created_at).toLocaleDateString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+
+                                {currentUser?.id === comment.user_id && (
+                                  <button
+                                    onClick={() => deleteComment(comment.id, post.id)}
+                                    className="text-zinc-400 hover:text-rose-500 transition-colors p-1 -mt-1 -mr-1"
+                                    title="Delete Comment"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
-                              <p className="text-xs text-zinc-300 mt-0.5 whitespace-pre-wrap font-medium">
+                              <p className="text-xs text-zinc-700 dark:text-zinc-300 mt-0.5 whitespace-pre-wrap font-medium">
                                 {renderContent(comment.content)}
                               </p>
                             </div>

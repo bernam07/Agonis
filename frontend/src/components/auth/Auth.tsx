@@ -47,6 +47,21 @@ export default function Auth({ onBack }: { onBack: () => void }) {
     e.preventDefault()
     setErrorMsg(null)
     setSuccessMsg(null)
+    
+    if (!email && !password) {
+      setErrorMsg('Please enter both email and password.')
+      return
+    }
+    
+    if (!email) {
+      setErrorMsg('Please enter your email address.')
+      return
+    }
+    
+    if (!password) {
+      setErrorMsg('Please enter a password.')
+      return
+    }
 
     if (password.length < 6) {
       setErrorMsg('Password must be at least 6 characters long.')
@@ -55,9 +70,13 @@ export default function Auth({ onBack }: { onBack: () => void }) {
 
     setLoading(true)
     const { error } = await supabase.auth.signUp({ email, password })
-
+    
     if (error) {
-      setErrorMsg(error.message)
+      if (error.message.toLowerCase().includes('already registered')) {
+        setErrorMsg('This email is already registered. Please sign in.')
+      } else {
+        setErrorMsg(error.message)
+      }
     } else {
       setSuccessMsg('Account created! Please check your email to verify.')
     }

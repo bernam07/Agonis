@@ -15,9 +15,10 @@
 */
 
 import { useRef, useState, useEffect } from 'react'
-import { Star, Download, X } from 'lucide-react'
+import { Download, X } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import { supabase } from '../../lib/supabase'
+import StarDisplay from '../common/StarDisplay'
 
 export default function ShareModal({ game, userGame, onClose }: any) {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -72,11 +73,12 @@ export default function ShareModal({ game, userGame, onClose }: any) {
   const coverUrl = game.cover?.url ? game.cover.url.replace('t_thumb', 't_cover_big') : null
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-sm m-auto flex flex-col items-center">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 sm:p-6 bg-zinc-950/98 backdrop-blur-xl">
+      <div className="w-full max-w-[320px] sm:max-w-340px flex flex-col items-center">
+        
         <div
           ref={cardRef}
-          className="w-[340px] relative rounded-[2rem] overflow-hidden bg-zinc-950 border border-zinc-800 flex flex-col shadow-2xl"
+          className="w-full relative rounded-4xl overflow-hidden bg-zinc-950 border border-zinc-800 flex flex-col shadow-2xl shrink-0"
         >
           {coverUrl && (
             <div
@@ -85,22 +87,15 @@ export default function ShareModal({ game, userGame, onClose }: any) {
             />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/90 to-zinc-950" />
+          <div className="absolute inset-0 bg-linear-to-b from-zinc-950/40 via-zinc-950/90 to-zinc-950" />
 
           <div className="relative z-10 pt-8 pb-4 px-6 flex flex-col items-center">
             <h1 className="text-xl font-black tracking-tighter text-indigo-500 mb-6 drop-shadow-md">
               AGONIS
             </h1>
 
-            <div className="w-32 aspect-[3/4] rounded-xl overflow-hidden shadow-2xl border border-zinc-700/50 mb-4 bg-zinc-900">
-              {coverUrl && (
-                <img
-                  src={coverUrl}
-                  alt={game.name}
-                  className="w-full h-full object-cover"
-                  crossOrigin="anonymous"
-                />
-              )}
+            <div className="w-32 aspect-3/4 rounded-xl overflow-hidden shadow-2xl border border-zinc-700/50 mb-4 bg-zinc-900">
+              {coverUrl && <img src={coverUrl} alt={game.name} className="w-full h-full object-cover" crossOrigin="anonymous" />}
             </div>
 
             <h2 className="text-xl font-black text-white text-center leading-tight mb-2">
@@ -108,15 +103,8 @@ export default function ShareModal({ game, userGame, onClose }: any) {
             </h2>
 
             {userGame?.rating > 0 && (
-              <div className="flex gap-1 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className="w-5 h-5"
-                    fill={userGame.rating >= star ? '#fbbf24' : 'none'}
-                    color={userGame.rating >= star ? '#fbbf24' : '#3f3f46'}
-                  />
-                ))}
+              <div className="mb-4">
+                <StarDisplay rating={userGame.rating} size={20} />
               </div>
             )}
 
@@ -134,9 +122,7 @@ export default function ShareModal({ game, userGame, onClose }: any) {
                 <p className="text-sm font-medium text-zinc-300 leading-relaxed text-center italic relative z-10 line-clamp-6">
                   {userGame.review}
                 </p>
-                <span className="absolute -bottom-4 -right-2 text-4xl text-zinc-700 font-serif">
-                  "
-                </span>
+                <span className="absolute -bottom-4 -right-2 text-4xl text-zinc-700 font-serif">"</span>
               </div>
             </div>
           )}
@@ -145,12 +131,7 @@ export default function ShareModal({ game, userGame, onClose }: any) {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden">
                 {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={username}
-                    className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
-                  />
+                  <img src={avatarUrl} alt={username} className="w-full h-full object-cover" crossOrigin="anonymous" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center font-bold text-zinc-500 text-xs">
                     {username.charAt(0).toUpperCase()}
@@ -158,9 +139,7 @@ export default function ShareModal({ game, userGame, onClose }: any) {
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none">
-                  Review by
-                </p>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none">Review by</p>
                 <p className="text-sm font-bold text-zinc-200 leading-tight">@{username}</p>
               </div>
             </div>
@@ -171,29 +150,28 @@ export default function ShareModal({ game, userGame, onClose }: any) {
           </div>
         </div>
 
-        <div className="flex gap-4 mt-8">
+        <div className="flex w-full gap-3 mt-6">
           <button
             onClick={onClose}
-            className="w-12 h-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors shadow-lg"
+            className="w-14 h-14 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors shadow-lg shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
 
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex-1 px-8 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+            className="flex-1 h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-indigo-600/20"
           >
-            {exporting ? (
-              'Generating Image...'
-            ) : (
+            {exporting ? 'Generating...' : (
               <>
-                <Download className="w-4 h-4" />
+                <Download className="w-5 h-5" />
                 Save to Device
               </>
             )}
           </button>
         </div>
+
       </div>
     </div>
   )

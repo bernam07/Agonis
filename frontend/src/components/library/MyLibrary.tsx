@@ -17,7 +17,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import GameModal from '../game/GameModal'
-import { Star } from 'lucide-react'
+import StarDisplay from '../common/StarDisplay'
 
 export default function MyLibrary({
   library,
@@ -109,7 +109,7 @@ export default function MyLibrary({
                 {game.status.replace('_', ' ')}
               </span>
 
-              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
+              <div className="aspect-3/4 rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
                 {game.cover?.url && (
                   <img
                     src={game.cover.url.replace('t_thumb', 't_cover_big')}
@@ -123,15 +123,8 @@ export default function MyLibrary({
                 {game.name}
               </h3>
 
-              <div className="flex justify-center gap-0.5 text-amber-400 mt-auto">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className="w-3 h-3"
-                    fill={game.rating >= star ? 'currentColor' : 'none'}
-                    strokeWidth={game.rating >= star ? 0 : 2}
-                  />
-                ))}
+              <div className="flex justify-center mt-auto">
+                <StarDisplay rating={game.rating} size={12} />
               </div>
             </div>
           ))}

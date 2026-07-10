@@ -18,6 +18,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import GameModal from '../game/GameModal'
 import { Trophy, Star, Users, Flame, Lock, Trash2, AlertTriangle } from 'lucide-react'
+import StarDisplay from '../common/StarDisplay'
 
 export default function Profile({
   userId,
@@ -386,7 +387,7 @@ export default function Profile({
       }
     })
 
-    const averageRating = ratedCount > 0 ? (ratingSum / ratedCount).toFixed(1) : '0.0'
+    const averageRating: number = ratedCount > 0 ? parseFloat((ratingSum / ratedCount).toFixed(1)) : 0
 
     const platformData = Object.entries(platforms)
       .map(([name, count]) => ({ name, count }))
@@ -459,7 +460,7 @@ export default function Profile({
         desc: 'Completed 5+ games',
       })
     }
-    if (libStats.favorites.length >= 3) {
+    if (Number(libStats.favorites.length >= 3)) {
       badges.push({
         icon: <Star className="w-5 h-5 text-amber-400" fill="currentColor" />,
         name: 'Tastemaker',
@@ -701,15 +702,17 @@ export default function Profile({
             </div>
             <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
               <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Avg Rating</span>
-              <span className="text-3xl font-black text-yellow-500 flex items-center gap-1.5">
+              <span className="text-3xl font-black text-amber-400 mb-2 flex items-center gap-2">
                 {libStats.averageRating}
-                <Star className="w-6 h-6 text-yellow-500" fill="currentColor" />
               </span>
+              {libStats.averageRating > 0 && (
+                 <StarDisplay rating={libStats.averageRating} size={16} />
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-center min-h-[180px] h-full">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-center min-h-45 h-full">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-6 text-center">
                 Library by Status
               </h3>
@@ -752,7 +755,7 @@ export default function Profile({
               )}
             </div>
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-center min-h-[180px] h-full">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-center min-h-45 h-full">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-6 text-center">
                 Top Platforms
               </h3>
@@ -813,10 +816,10 @@ export default function Profile({
                       <img
                         src={game.cover.url.replace('t_thumb', 't_cover_big')}
                         alt={game.name}
-                        className="w-full aspect-[3/4] object-cover transition-transform group-hover:scale-105"
+                        className="w-full aspect-3/4 object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (
-                      <div className="w-full aspect-[3/4] bg-zinc-800 transition-transform group-hover:scale-105"></div>
+                      <div className="w-full aspect-3/4 bg-zinc-800 transition-transform group-hover:scale-105"></div>
                     )}
                     <div className="absolute inset-0 bg-zinc-950/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
                       <span className="text-white text-xs font-bold line-clamp-2">
@@ -975,7 +978,7 @@ export default function Profile({
                         <span className="absolute top-3 right-3 z-10 text-[9px] font-black bg-zinc-950/90 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded capitalize">
                           {game.status.replace('_', ' ')}
                         </span>
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-950 mb-2">
+                        <div className="aspect-3/4 rounded-lg overflow-hidden bg-zinc-950 mb-2">
                           {game.cover?.url ? (
                             <img
                               src={game.cover.url.replace('t_thumb', 't_cover_big')}
@@ -1111,7 +1114,7 @@ export default function Profile({
                                     className="relative group/game bg-zinc-900 border border-zinc-800/80 rounded-xl p-2 flex flex-col items-center"
                                   >
                                     <div
-                                      className="aspect-[3/4] w-full rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800/40 cursor-pointer"
+                                      className="aspect-3/4 w-full rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800/40 cursor-pointer"
                                       onClick={() => {
                                         const trackedGame = userLibrary.find(
                                           (libGame) => libGame.igdb_id === g.igdb_id
@@ -1177,7 +1180,7 @@ export default function Profile({
 
       {followModalData && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm"
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm"
           onClick={() => setFollowModalData(null)}
         >
           <div

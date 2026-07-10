@@ -157,22 +157,22 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
   }
 
   const handleAddToList = async () => {
-    if (!selectedListId || !igdbId) return
+    if (!userGame || !userGame.id) {
+      alert("You need to 'Save Changes' and add this game to your library first before putting it in a list!")
+      return
+    }
 
-    const { error } = await supabase.from('list_games').insert([
-      {
-        list_id: selectedListId,
-        igdb_id: igdbId,
-        game_name: game.name || game.game_name,
-        game_cover: game.cover?.url || game.game_cover || null,
-      },
-    ])
+    const { error } = await supabase.from('list_games').insert({
+      list_id: selectedListId,
+      game_id: userGame.id
+    })
 
     if (error) {
-      alert('This game is already in that list.')
+      console.error(error)
+      alert("Error adding to list.")
     } else {
-      alert('Game added to list successfully!')
-      setSelectedListId('')
+      alert("Game added to the list!")
+      setSelectedListId("")
     }
   }
 
@@ -282,7 +282,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
     <div className={`fixed inset-0 z-50 p-4 sm:p-6 bg-zinc-950/80 backdrop-blur-md flex items-center justify-center ${showShare ? 'overflow-hidden' : 'overflow-y-auto'}`}>
       <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 text-zinc-100 m-auto shadow-2xl relative">
         <div className="flex gap-5 mb-6 shrink-0">
-          <div className="w-28 aspect-[3/4] bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shrink-0 shadow-lg">
+          <div className="w-28 aspect-3/4 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shrink-0 shadow-lg">
             {displayGame.cover?.url && (
               <img
                 src={displayGame.cover.url.replace('t_thumb', 't_cover_big')}
@@ -296,16 +296,43 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
               {displayGame.name || displayGame.game_name}
             </h2>
             <div className="flex gap-1 mb-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  disabled={isReadOnly}
-                  onClick={() => setRating(star)}
-                  className={`text-2xl transition-transform ${!isReadOnly && 'hover:scale-110'} ${rating >= star ? 'text-amber-400' : 'text-zinc-700'}`}
-                >
-                  <Star className="w-6 h-6" fill={rating >= star ? 'currentColor' : 'none'} />
-                </button>
-              ))}
+              {[1, 2, 3, 4, 5].map((star) => {
+                const fillWidth = rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%';
+
+                return (
+                  <div key={star} className={`relative w-6 h-6 ${!isReadOnly && 'hover:scale-110'} transition-transform`}>
+                    
+                    {/* Estrela Cinzenta (Fundo) */}
+                    <Star className="absolute top-0 left-0 w-6 h-6 text-zinc-700" />
+                    
+                    {/* Estrela Amarela (Preenchimento cortado) */}
+                    <div 
+                      className="absolute top-0 left-0 h-full overflow-hidden text-amber-400 pointer-events-none"
+                      style={{ width: fillWidth }}
+                    >
+                      <Star className="w-6 h-6 max-w-none" fill="currentColor" />
+                    </div>
+
+                    {/* Zonas de clique invisíveis (Esquerda = 0.5, Direita = Inteiro) */}
+                    {!isReadOnly && (
+                      <div className="absolute inset-0 flex">
+                        <button 
+                          type="button" 
+                          onClick={() => setRating(star - 0.5)} 
+                          className="w-1/2 h-full outline-none cursor-pointer"
+                          title={`${star - 0.5} Stars`}
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setRating(star)} 
+                          className="w-1/2 h-full outline-none cursor-pointer"
+                          title={`${star} Stars`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

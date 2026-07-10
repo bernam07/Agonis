@@ -73,7 +73,7 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
       <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20">
         <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-6 leading-tight max-w-4xl">
           Track, rate, and discuss <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
+          <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-400 to-purple-500">
             every game you play.
           </span>
         </h2>

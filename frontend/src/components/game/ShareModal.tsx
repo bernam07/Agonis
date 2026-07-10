@@ -15,107 +15,183 @@
 */
 
 import { useRef, useState, useEffect } from 'react'
-import { toPng } from 'html-to-image'
+import { Star, Download, X } from 'lucide-react'
+import html2canvas from 'html2canvas'
 import { supabase } from '../../lib/supabase'
-import { Star } from 'lucide-react'
 
 export default function ShareModal({ game, userGame, onClose }: any) {
   const cardRef = useRef<HTMLDivElement>(null)
-  const [downloading, setDownloading] = useState(false)
-  const [username, setUsername] = useState('')
+  const [exporting, setExporting] = useState(false)
+  const [username, setUsername] = useState<string>('user')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', userGame.user_id)
-        .single()
-      if (data) setUsername(data.username)
+    const fetchUserData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('username, avatar_url')
+          .eq('id', user.id)
+          .single()
+        if (data) {
+          setUsername(data.username)
+          setAvatarUrl(data.avatar_url)
+        }
+      }
     }
-    fetchUser()
-  }, [userGame.user_id])
+    fetchUserData()
+  }, [])
 
-  const handleDownload = async () => {
+  const handleExport = async () => {
     if (!cardRef.current) return
-    setDownloading(true)
+    setExporting(true)
+
     try {
-      const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 })
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 3,
+        backgroundColor: '#09090b',
+        useCORS: true,
+      })
+
+      const image = canvas.toDataURL('image/jpeg', 0.9)
       const link = document.createElement('a')
-      link.download = `agonis-${game.name.replace(/\s+/g, '-').toLowerCase()}.png`
-      link.href = dataUrl
+      link.href = image
+      link.download = `agonis-${game.name.replace(/\s+/g, '-').toLowerCase()}-review.jpg`
       link.click()
-    } catch (err) {
-      alert('Failed to generate image')
+    } catch (error) {
+      console.error('Erro ao exportar:', error)
+      alert('Error generating image. Try again.')
     }
-    setDownloading(false)
+
+    setExporting(false)
   }
 
+  const coverUrl = game.cover?.url ? game.cover.url.replace('t_thumb', 't_cover_big') : null
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
-      <div className="w-full max-w-md flex flex-col items-center gap-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-sm m-auto flex flex-col items-center">
         <div
           ref={cardRef}
-          className="w-full aspect-[4/5] bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden relative shadow-2xl flex flex-col justify-between p-8"
-          style={{
-            backgroundImage: `linear-gradient(to bottom, rgba(9, 9, 11, 0.7), rgba(9, 9, 11, 1)), url(${game.cover?.url?.replace('t_thumb', 't_1080p')})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+          className="w-[340px] relative rounded-[2rem] overflow-hidden bg-zinc-950 border border-zinc-800 flex flex-col shadow-2xl"
         >
-          <div className="flex justify-between items-start">
-            <h1 className="text-xl font-black tracking-tighter text-indigo-500">AGONIS</h1>
-            <span className="text-zinc-400 font-bold text-xs bg-zinc-950/50 px-3 py-1 rounded-full backdrop-blur-md border border-zinc-800/50">
-              @{username}
-            </span>
-          </div>
+          {coverUrl && (
+            <div
+              className="absolute inset-0 opacity-20 bg-cover bg-center blur-xl scale-110"
+              style={{ backgroundImage: `url(${coverUrl})` }}
+            />
+          )}
 
-          <div className="flex flex-col items-center text-center gap-4 mt-auto relative z-10">
-            <div className="w-32 aspect-[3/4] rounded-xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-zinc-700/50">
-              {game.cover?.url && (
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/90 to-zinc-950" />
+
+          <div className="relative z-10 pt-8 pb-4 px-6 flex flex-col items-center">
+            <h1 className="text-xl font-black tracking-tighter text-indigo-500 mb-6 drop-shadow-md">
+              AGONIS
+            </h1>
+
+            <div className="w-32 aspect-[3/4] rounded-xl overflow-hidden shadow-2xl border border-zinc-700/50 mb-4 bg-zinc-900">
+              {coverUrl && (
                 <img
-                  src={game.cover.url.replace('t_thumb', 't_cover_big')}
+                  src={coverUrl}
                   alt={game.name}
                   className="w-full h-full object-cover"
+                  crossOrigin="anonymous"
                 />
               )}
             </div>
 
-            <div>
-              <h2 className="text-2xl font-black text-white leading-tight mb-1">{game.name}</h2>
-              <div className="flex justify-center gap-1 text-amber-400 mt-1">
+            <h2 className="text-xl font-black text-white text-center leading-tight mb-2">
+              {game.name}
+            </h2>
+
+            {userGame?.rating > 0 && (
+              <div className="flex gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
                     className="w-5 h-5"
-                    fill={userGame.rating >= star ? 'currentColor' : 'none'}
-                    strokeWidth={userGame.rating >= star ? 0 : 2}
+                    fill={userGame.rating >= star ? '#fbbf24' : 'none'}
+                    color={userGame.rating >= star ? '#fbbf24' : '#3f3f46'}
                   />
                 ))}
               </div>
+            )}
+
+            {userGame?.status && (
+              <span className="px-3 py-1 bg-zinc-800/80 border border-zinc-700 rounded-full text-[10px] font-bold text-zinc-300 uppercase tracking-widest backdrop-blur-md">
+                {userGame.status.replace('_', ' ')}
+              </span>
+            )}
+          </div>
+
+          {userGame?.review && (
+            <div className="relative z-10 px-6 pb-6 pt-2 flex-1 flex flex-col justify-center">
+              <div className="relative">
+                <span className="absolute -top-4 -left-2 text-4xl text-zinc-700 font-serif">"</span>
+                <p className="text-sm font-medium text-zinc-300 leading-relaxed text-center italic relative z-10 line-clamp-6">
+                  {userGame.review}
+                </p>
+                <span className="absolute -bottom-4 -right-2 text-4xl text-zinc-700 font-serif">
+                  "
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="relative z-10 mt-auto p-6 flex items-center justify-between border-t border-zinc-800/50 bg-zinc-950/50 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={username}
+                    className="w-full h-full object-cover"
+                    crossOrigin="anonymous"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center font-bold text-zinc-500 text-xs">
+                    {username.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none">
+                  Review by
+                </p>
+                <p className="text-sm font-bold text-zinc-200 leading-tight">@{username}</p>
+              </div>
             </div>
 
-            {userGame.review && (
-              <p className="text-zinc-300 text-sm font-medium line-clamp-4 bg-zinc-950/40 p-4 rounded-2xl backdrop-blur-md border border-zinc-800/50 w-full">
-                "{userGame.review}"
-              </p>
-            )}
+            <div className="text-right">
+              <p className="text-xs font-black text-indigo-400">agonis.xyz</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-3 w-full">
+        <div className="flex gap-4 mt-8">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-sm transition-colors"
+            className="w-12 h-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors shadow-lg"
           >
-            Cancel
+            <X className="w-5 h-5" />
           </button>
+
           <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors flex justify-center items-center gap-2"
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex-1 px-8 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-indigo-600/20"
           >
-            {downloading ? 'Generating...' : 'Download Card'}
+            {exporting ? (
+              'Generating Image...'
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Save to Device
+              </>
+            )}
           </button>
         </div>
       </div>

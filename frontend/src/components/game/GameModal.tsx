@@ -62,6 +62,17 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
     }
   }, [igdbId])
 
+  useEffect(() => {
+    // Tranca o ecrã inteiro
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+      document.documentElement.style.overflow = 'unset'
+    }
+  }, [])
+
   const fetchGameDetails = async () => {
     if (!igdbId) return
 
@@ -115,14 +126,16 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
     }
 
     if (data) {
-      const ratedGames = data.filter((d:any) => d.rating && d.rating > 0)
+      const ratedGames = data.filter((d: any) => d.rating && d.rating > 0)
       const avg =
         ratedGames.length > 0
-          ? (ratedGames.reduce((acc:any, d:any) => acc + d.rating, 0) / ratedGames.length).toFixed(1)
+          ? (
+              ratedGames.reduce((acc: any, d: any) => acc + d.rating, 0) / ratedGames.length
+            ).toFixed(1)
           : '0.0'
       setCommunityAvg(avg)
 
-      const withReviews = data.filter((d:any) => d.review && d.review.trim() !== '')
+      const withReviews = data.filter((d: any) => d.review && d.review.trim() !== '')
       setCommunityReviews(withReviews)
     }
 
@@ -266,9 +279,9 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
   const displayGame = fullGameDetails || game
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-zinc-100 my-8 shadow-2xl relative">
-        <div className="flex gap-5 mb-6">
+    <div className={`fixed inset-0 z-50 p-4 sm:p-6 bg-zinc-950/80 backdrop-blur-md flex items-center justify-center ${showShare ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+      <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 text-zinc-100 m-auto shadow-2xl relative">
+        <div className="flex gap-5 mb-6 shrink-0">
           <div className="w-28 aspect-[3/4] bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shrink-0 shadow-lg">
             {displayGame.cover?.url && (
               <img
@@ -278,8 +291,8 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
               />
             )}
           </div>
-          <div className="flex flex-col justify-center">
-            <h2 className="text-2xl font-black text-white mb-2 leading-tight">
+          <div className="flex flex-col justify-center min-w-0">
+            <h2 className="text-2xl font-black text-white mb-2 leading-tight truncate">
               {displayGame.name || displayGame.game_name}
             </h2>
             <div className="flex gap-1 mb-2">
@@ -290,17 +303,14 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
                   onClick={() => setRating(star)}
                   className={`text-2xl transition-transform ${!isReadOnly && 'hover:scale-110'} ${rating >= star ? 'text-amber-400' : 'text-zinc-700'}`}
                 >
-                  <Star 
-                    className="w-6 h-6" 
-                    fill={rating >= star ? "currentColor" : "none"} 
-                  />
+                  <Star className="w-6 h-6" fill={rating >= star ? 'currentColor' : 'none'} />
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="flex border-b border-zinc-800 mb-6 gap-6 overflow-x-auto custom-scrollbar">
+        <div className="flex border-b border-zinc-800 mb-6 gap-6 overflow-x-auto custom-scrollbar shrink-0">
           <button
             onClick={() => setActiveTab('track')}
             className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'track' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}
@@ -327,9 +337,10 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
           </button>
         </div>
 
-        <div className="min-h-[250px] max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="mt-2">
           {activeTab === 'track' && !isReadOnly && (
-            <div>
+            <div className="max-w-full">
+              {' '}
               <div className="mb-6">
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">
                   Status
@@ -339,7 +350,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
                     <button
                       key={s.id}
                       onClick={() => setStatus(s.id)}
-                      className={`py-2 text-center rounded-lg font-bold text-xs transition-colors ${
+                      className={`py-2.5 px-2 text-center rounded-lg font-bold text-[11px] sm:text-xs transition-colors truncate ${
                         status === s.id
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
@@ -350,17 +361,16 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
                   ))}
                 </div>
               </div>
-
               {myLists.length > 0 && (
                 <div className="mb-6 bg-zinc-950/40 border border-zinc-800/60 p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-end sm:items-center justify-between">
-                  <div className="flex-1 w-full">
+                  <div className="flex-1 w-full min-w-0">
                     <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">
                       Add to Custom List
                     </label>
                     <select
                       value={selectedListId}
                       onChange={(e) => setSelectedListId(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:border-indigo-500 transition-colors cursor-pointer appearance-none"
+                      className="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:border-indigo-500 transition-colors cursor-pointer appearance-none truncate"
                     >
                       <option value="">Select a list...</option>
                       {myLists.map((list) => (
@@ -380,7 +390,6 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
                   </button>
                 </div>
               )}
-
               <div className="mb-6">
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">
                   Notes & Review
@@ -574,11 +583,11 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
                               {rev.rating > 0 && (
                                 <div className="flex items-center gap-0.5 text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
                                   {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star 
-                                      key={star} 
-                                      className="w-3 h-3" 
-                                      fill={rev.rating >= star ? "currentColor" : "none"}
-                                      strokeWidth={rev.rating >= star ? 0 : 2} 
+                                    <Star
+                                      key={star}
+                                      className="w-3 h-3"
+                                      fill={rev.rating >= star ? 'currentColor' : 'none'}
+                                      strokeWidth={rev.rating >= star ? 0 : 2}
                                     />
                                   ))}
                                 </div>
@@ -599,7 +608,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
         </div>
 
         {userGame && (
-          <div className="mt-6 pt-4 border-t border-zinc-800">
+          <div className="mt-6 pt-4 border-t border-zinc-800 shrink-0">
             <button
               onClick={() => setShowShare(true)}
               className="w-full bg-indigo-950/30 border border-indigo-500/30 hover:border-indigo-500 text-indigo-300 hover:text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
@@ -609,7 +618,8 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-6 pt-4 border-t border-zinc-800">
+        {/* RODAPÉ SEMPRE VISÍVEL */}
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-zinc-800 shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors"
@@ -617,23 +627,23 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
             Close
           </button>
           {!isReadOnly && (
-          <div className="flex gap-3">
-            {userGame && (
+            <div className="flex gap-3">
+              {userGame && (
+                <button
+                  onClick={deleteGame}
+                  className="px-5 py-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 text-sm font-bold transition-colors"
+                >
+                  Remove
+                </button>
+              )}
               <button
-                onClick={deleteGame}
-                className="px-5 py-2.5 rounded-xl text-rose-500 hover:bg-rose-500/10 text-sm font-bold transition-colors"
+                onClick={saveGame}
+                disabled={loading}
+                className="px-8 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-colors shadow-lg shadow-indigo-500/20"
               >
-                Remove from Library
+                {loading ? 'Saving...' : 'Save Changes'}
               </button>
-            )}
-            <button
-              onClick={saveGame}
-              disabled={loading}
-              className="px-8 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-colors shadow-lg shadow-indigo-500/20"
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
+            </div>
           )}
         </div>
       </div>

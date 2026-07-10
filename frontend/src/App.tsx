@@ -29,6 +29,7 @@ import FAQ from './components/legal/FAQ'
 import { AnimatePresence } from 'framer-motion'
 import PageTransition from './components/common/PageTransition'
 import { Sun, Moon} from 'lucide-react'
+import { Analytics } from '@vercel/analytics/react'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -290,6 +291,7 @@ export default function App() {
           setViewedUserId(null)
         }}
       />
+      <Analytics />
     </div>
   )
 }

@@ -185,7 +185,7 @@ export default function GameSearch({
                 onClick={() => setSelectedGame(game)}
                 className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-indigo-500 transition-all flex flex-col"
               >
-                <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
+                <div className="aspect-3/4 rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
                   {game.cover?.url ? (
                     <img
                       src={game.cover.url.replace('t_thumb', 't_cover_big')}

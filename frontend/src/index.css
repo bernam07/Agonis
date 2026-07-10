@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Esta linha diz ao Tailwind v4 para respeitar o teu botão de Dark Mode no App.tsx */
 @custom-variant dark (&:is(.dark *));
 
 html, body {

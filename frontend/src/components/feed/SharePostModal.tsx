@@ -31,13 +31,13 @@ export default function SharePostModal({ post, onClose }: any) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
       <div className="w-full max-w-sm flex flex-col gap-4">
         <div
           ref={cardRef}
-          className="bg-zinc-900 border border-zinc-800 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden"
+          className="bg-zinc-900 border border-zinc-800 rounded-4xl p-6 shadow-2xl relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-indigo-500 to-purple-500"></div>
 
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-800">

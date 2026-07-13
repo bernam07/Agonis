@@ -18,16 +18,16 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import GameModal from '../game/GameModal'
 import StarDisplay from '../common/StarDisplay'
+import type { CombinedGame} from '../../types'
 
-export default function MyLibrary({
-  library,
-  setLibrary,
-}: {
-  library: any[]
-  setLibrary: (lib: any[]) => void
-}) {
+interface MyLibraryProps {
+  library: CombinedGame[];
+  setLibrary: (lib: CombinedGame[]) => void;
+}
+
+export default function MyLibrary({ library, setLibrary }: MyLibraryProps) {
   const [loading, setLoading] = useState(true)
-  const [selectedGame, setSelectedGame] = useState<any>(null)
+  const [selectedGame, setSelectedGame] = useState<CombinedGame | null>(null)
   const [filter, setFilter] = useState<string>('all')
 
   const fetchMyGames = async () => {

@@ -83,12 +83,12 @@ export default function Stats({ library }: { library: any[] }) {
                   <img
                     src={game.cover.url.replace('t_thumb', 't_cover_big')}
                     alt={game.name}
-                    className="w-full aspect-[3/4] object-cover"
+                    className="w-full aspect-3/4 object-cover"
                   />
                 ) : (
-                  <div className="w-full aspect-[3/4] bg-gray-200 dark:bg-gray-700"></div>
+                  <div className="w-full aspect-3/4 bg-gray-200 dark:bg-gray-700"></div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent flex items-end p-2">
                   <span className="text-white text-xs font-bold line-clamp-1">{game.name}</span>
                 </div>
               </div>

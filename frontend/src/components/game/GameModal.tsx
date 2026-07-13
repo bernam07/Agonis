@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import ShareModal from './ShareModal'
 import { Star, Lock } from 'lucide-react'
+import type { Game, UserGame } from '../../types'
 
 const STATUSES = [
   { id: 'backlog', label: 'Backlog' },
@@ -27,7 +28,15 @@ const STATUSES = [
   { id: '100_percent', label: '100%' },
 ]
 
-export default function GameModal({ game, userGame, onClose, onRefresh, isReadOnly = false }: any) {
+interface GameModalProps {
+  game: Game;
+  userGame?: UserGame;
+  onClose: () => void;
+  onRefresh?: () => void;
+  isReadOnly?: boolean;
+}
+
+export default function GameModal({ game, userGame, onClose, onRefresh, isReadOnly = false }: GameModalProps) {
   const [status, setStatus] = useState(userGame?.status || 'backlog')
   const [rating, setRating] = useState(userGame?.rating || 0)
   const [review, setReview] = useState(userGame?.review || '')
@@ -675,8 +684,12 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
         </div>
       </div>
 
-      {showShare && (
-        <ShareModal game={displayGame} userGame={userGame} onClose={() => setShowShare(false)} />
+      {showShare && userGame && (
+        <ShareModal
+          game={game}
+          userGame={userGame}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </div>
   )

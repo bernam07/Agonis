@@ -107,7 +107,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-zinc-950 flex flex-col items-center justify-center p-4 relative">
+    <div className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center p-4 relative">
       <button
         onClick={onBack}
         className="absolute top-8 left-4 md:left-8 text-zinc-500 hover:text-white font-bold text-sm flex items-center gap-2 transition-colors"

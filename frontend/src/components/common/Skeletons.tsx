@@ -17,7 +17,7 @@
 export function GameSkeleton() {
   return (
     <div className="bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-2xl p-3 flex flex-col animate-pulse">
-      <div className="aspect-[3/4] rounded-xl bg-zinc-300 dark:bg-zinc-800/50 mb-3 w-full"></div>
+      <div className="aspect-3/4 rounded-xl bg-zinc-300 dark:bg-zinc-800/50 mb-3 w-full"></div>
       <div className="h-4 bg-zinc-300 dark:bg-zinc-800/50 rounded w-3/4 mx-auto mt-auto"></div>
     </div>
   )

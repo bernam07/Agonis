@@ -19,8 +19,15 @@ import { Download, X } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import { supabase } from '../../lib/supabase'
 import StarDisplay from '../common/StarDisplay'
+import type { Game, UserGame } from '../../types'
 
-export default function ShareModal({ game, userGame, onClose }: any) {
+interface ShareModalProps {
+  game: Game;
+  userGame: UserGame;
+  onClose: () => void;
+}
+
+export default function ShareModal({ game, userGame, onClose }: ShareModalProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [exporting, setExporting] = useState(false)
   const [username, setUsername] = useState<string>('user')

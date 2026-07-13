@@ -130,14 +130,15 @@ const game = {
   cover: { url: 'https://example.com/t_thumb.jpg' },
   summary: 'A legendary sci-fi shooter.',
   platforms: [{ id: 1, name: 'PC' }],
-}
+} as any
 
 const userGame = {
+  igdb_id: 1,
   status: 'playing',
   rating: 4,
   review: 'Great game.',
-  completed_at: null,
-}
+  completed_at: undefined,
+} as any
 
 describe('GameModal', () => {
   beforeEach(() => {

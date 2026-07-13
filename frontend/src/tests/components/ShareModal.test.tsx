@@ -33,14 +33,19 @@ describe('ShareModal', () => {
   it('renders and downloads the review card', async () => {
     const onClose = vi.fn()
     const game = {
+      id: 1,
       name: 'Halo',
       cover: { url: 'https://example.com/t_thumb.jpg' },
-    }
+    } as any
+
     const userGame = {
+      id: '1',
+      igdb_id: 1,
+      status: 'completed',
       user_id: 'user-1',
       rating: 4,
       review: 'Great game.',
-    }
+    } as any
 
     const originalCreateElement = document.createElement.bind(document)
     const clickSpy = vi.fn()

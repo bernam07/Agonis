@@ -95,10 +95,10 @@ export default function Profile({
     setFollowingCount(f2 || 0)
 
     if (user && user.id !== targetId) {
-      const { data: followData } = await supabase.from('follows').select('*').match({ follower_id: user.id, following_id: targetId }).single()
+      const { data: followData } = await supabase.from('follows').select('*').match({ follower_id: user.id, following_id: targetId }).maybeSingle()
       setIsFollowing(!!followData)
 
-      const { data: requestData } = await supabase.from('follow_requests').select('*').match({ sender_id: user.id, receiver_id: targetId }).single()
+      const { data: requestData } = await supabase.from('follow_requests').select('*').match({ sender_id: user.id, receiver_id: targetId }).maybeSingle()
       setIsRequested(!!requestData)
     }
 

@@ -26,6 +26,7 @@ describe('MyLibrary', () => {
     const library = [
       {
         id: 1,
+        igdb_id: 1,
         name: 'Game One',
         status: 'completed',
         rating: 5,
@@ -33,12 +34,13 @@ describe('MyLibrary', () => {
       },
       {
         id: 2,
+        igdb_id: 2,
         name: 'Game Two',
         status: 'backlog',
         rating: 2,
         cover: { url: 'https://example.com/t_thumb.jpg' },
       },
-    ]
+    ] as any[]
 
     const { container, cleanup } = renderIntoDocument(<MyLibrary library={library} setLibrary={setLibrary} />)
 

@@ -77,15 +77,15 @@ export default function MyLibrary({ library, setLibrary }: MyLibraryProps) {
 
   return (
     <div className="w-full">
-      <div className="flex flex-wrap gap-2 mb-8 border-b border-zinc-900 pb-4">
+      <div className="flex flex-wrap gap-2 mb-8 border-b border-zinc-200 dark:border-zinc-900 pb-4">
         {['all', 'backlog', 'playing', 'completed', 'dropped', '100_percent'].map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
             className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-colors capitalize ${
               filter === status
-                ? 'bg-zinc-100 text-zinc-950 border-zinc-100'
-                : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+                ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
+                : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 dark:bg-zinc-950 dark:text-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700'
             }`}
           >
             {status.replace('_', ' ')}
@@ -103,13 +103,13 @@ export default function MyLibrary({ library, setLibrary }: MyLibraryProps) {
             <div
               key={game.id}
               onClick={() => setSelectedGame(game)}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-zinc-700 transition-all relative flex flex-col"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-zinc-300 dark:hover:border-zinc-700 transition-all relative flex flex-col"
             >
-              <span className="absolute top-5 right-5 z-10 text-[10px] font-black bg-zinc-950/90 text-zinc-300 border border-zinc-800 px-2 py-0.5 rounded-md capitalize backdrop-blur-sm">
+              <span className="absolute top-5 right-5 z-10 text-[10px] font-black bg-white/90 dark:bg-zinc-950/90 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 px-2 py-0.5 rounded-md capitalize backdrop-blur-sm">
                 {game.status.replace('_', ' ')}
               </span>
 
-              <div className="aspect-3/4 rounded-xl overflow-hidden bg-zinc-950 mb-3 border border-zinc-800/50">
+              <div className="aspect-3/4 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-950 mb-3 border border-zinc-200/50 dark:border-zinc-800/50">
                 {game.cover?.url && (
                   <img
                     src={game.cover.url.replace('t_thumb', 't_cover_big')}
@@ -119,7 +119,7 @@ export default function MyLibrary({ library, setLibrary }: MyLibraryProps) {
                 )}
               </div>
 
-              <h3 className="font-bold text-sm text-zinc-200 line-clamp-1 text-center px-1 mb-1">
+              <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200 line-clamp-1 text-center px-1 mb-1">
                 {game.name}
               </h3>
 

@@ -24,12 +24,12 @@ export default function FAQ() {
 
   return (
     <div className="max-w-2xl mx-auto py-12">
-      <h2 className="text-3xl font-black text-white mb-8 text-center">Frequently Asked Questions</h2>
+      <h2 className="text-3xl font-black text-zinc-900 dark:text-white mb-8 text-center">Frequently Asked Questions</h2>
       <div className="space-y-4">
         {faqs.map((faq, i) => (
-          <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-indigo-400 mb-2">{faq.q}</h3>
-            <p className="text-zinc-300 text-sm leading-relaxed font-medium">{faq.a}</p>
+          <div key={i} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mb-2">{faq.q}</h3>
+            <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed font-medium">{faq.a}</p>
           </div>
         ))}
       </div>

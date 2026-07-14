@@ -21,6 +21,8 @@ import { Star } from 'lucide-react'
 import type { Game, UserGame } from '../../types'
 import GameDetailsTab from './GameDetailsTab'
 import ReviewFormTab from './ReviewFormTab'
+import GameScreenshotsTab from './GameScreenshotsTab'
+import GameCommunityTab from './GameCommunityTab'
 
 interface GameModalProps {
   game: Game;
@@ -92,7 +94,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
   const loadCommunityData = async () => {
     if (!igdbId) return
     setCommunityLoading(true)
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('user_games')
       .select('rating, review, profiles ( username, avatar_url )')
       .eq('igdb_id', igdbId)
@@ -256,90 +258,17 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
             <GameDetailsTab displayGame={displayGame} detailsLoading={detailsLoading} />
           )}
 
-          {/* A PARTIR DAQUI SÃO AS OUTRAS ABAS (Mantidas como estavam) */}
           {activeTab === 'screenshots' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Your Gallery</h4>
-                <label className="text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-sm">
-                  {uploadingScreenshot ? 'Uploading...' : '+ Upload Image'}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleScreenshotUpload} disabled={uploadingScreenshot} />
-                </label>
-              </div>
-
-              {screenshots.length === 0 ? (
-                <div className="text-center py-12 text-zinc-600 font-medium text-sm border-2 border-dashed border-zinc-800 rounded-2xl bg-zinc-950/50">
-                  No screenshots yet. <br /> Upload one or attach an image to a feed post!
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {screenshots.map((shot) => (
-                    <div key={shot.id} className="rounded-xl overflow-hidden border border-zinc-800 aspect-video bg-zinc-950 shadow-md">
-                      <img src={shot.url} alt="Game screenshot" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <GameScreenshotsTab
+              screenshots={screenshots} uploadingScreenshot={uploadingScreenshot}
+              handleScreenshotUpload={handleScreenshotUpload}
+            />
           )}
 
           {activeTab === 'community' && (
-            <div className="space-y-6">
-              {communityLoading ? (
-                <div className="text-zinc-500 text-xs font-bold text-center py-8 animate-pulse">Loading community insights...</div>
-              ) : (
-                <>
-                  <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-                    <span className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-2">Global Agonis Rating</span>
-                    <div className="text-5xl font-black text-amber-400 drop-shadow-md flex items-baseline gap-1">
-                      {communityAvg} <span className="text-2xl text-zinc-600">/ 5</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Community Reviews</h4>
-                      <div className="h-px flex-1 bg-zinc-800"></div>
-                    </div>
-
-                    {communityReviews.length === 0 ? (
-                      <div className="text-center py-8 text-zinc-600 font-medium text-sm border-2 border-dashed border-zinc-800 rounded-2xl bg-zinc-950/30">
-                        No written reviews yet. Be the first to share your thoughts!
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {communityReviews.map((rev, idx) => (
-                          <div key={idx} className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-4">
-                            <div className="flex justify-between items-center mb-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden shrink-0 border border-zinc-700">
-                                  {rev.profiles?.avatar_url ? (
-                                    <img src={rev.profiles.avatar_url} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-zinc-500">
-                                      {rev.profiles?.username?.charAt(0).toUpperCase() || '?'}
-                                    </div>
-                                  )}
-                                </div>
-                                <span className="text-sm font-bold text-zinc-200">@{rev.profiles?.username || 'unknown'}</span>
-                              </div>
-                              {rev.rating > 0 && (
-                                <div className="flex items-center gap-0.5 text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star key={star} className="w-3 h-3" fill={rev.rating >= star ? 'currentColor' : 'none'} strokeWidth={rev.rating >= star ? 0 : 2} />
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-sm text-zinc-300 leading-relaxed font-medium whitespace-pre-wrap">{rev.review}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+            <GameCommunityTab
+              communityLoading={communityLoading} communityAvg={communityAvg} communityReviews={communityReviews}
+            />
           )}
         </div>
 

@@ -18,7 +18,7 @@ export default function StarDisplay({ rating, size = 16 }: StarDisplayProps) {
             style={{ width: `${size}px`, height: `${size}px` }}
           >
             <Star
-              className="absolute top-0 left-0 text-zinc-700"
+              className="absolute top-0 left-0 text-zinc-300 dark:text-zinc-700"
               style={{ width: `${size}px`, height: `${size}px` }}
             />
             <div

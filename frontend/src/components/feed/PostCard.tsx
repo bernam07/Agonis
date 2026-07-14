@@ -44,13 +44,13 @@ export default function PostCard({
   const isSpoiler = post.has_spoilers && !isRevealed
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 transition-colors hover:border-zinc-700">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 transition-colors hover:border-zinc-300 dark:hover:border-zinc-700">
       <div className="flex justify-between items-start mb-4">
         <div
           onClick={() => onUserClick(post.profiles.id)}
           className="flex items-center gap-3 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-black text-zinc-400 overflow-hidden group-hover:border-indigo-500 transition-colors">
+          <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 flex items-center justify-center font-black text-zinc-600 dark:text-zinc-400 overflow-hidden group-hover:border-indigo-500 transition-colors">
             {post.profiles?.avatar_url ? (
               <img
                 src={post.profiles.avatar_url}
@@ -62,7 +62,7 @@ export default function PostCard({
             )}
           </div>
           <div>
-            <div className="font-bold text-zinc-100 text-sm group-hover:text-indigo-400 transition-colors">
+            <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
               @{post.profiles?.username || 'unknown'}
             </div>
             <div className="text-xs font-medium text-zinc-500">
@@ -88,7 +88,7 @@ export default function PostCard({
       {post.game_name && (
         <div
           onClick={() => handleGameClick(post)}
-          className="flex items-center gap-3 bg-zinc-950 border border-zinc-800/50 p-2 rounded-xl mb-4 max-w-full pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
+          className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800/50 p-2 rounded-xl mb-4 max-w-full pr-4 cursor-pointer hover:border-indigo-500 transition-colors group/game"
         >
           {post.game_cover && (
             <img
@@ -97,20 +97,20 @@ export default function PostCard({
               className="w-8 h-10 object-cover rounded-md shrink-0"
             />
           )}
-          <span className="text-xs font-bold text-indigo-400 group-hover/game:text-indigo-300 transition-colors truncate min-w-0">
+          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover/game:text-indigo-500 dark:group-hover/game:text-indigo-300 transition-colors truncate min-w-0">
             {post.game_name}
           </span>
         </div>
       )}
 
       {isSpoiler ? (
-        <div className="bg-zinc-950/80 border border-amber-500/30 rounded-xl p-6 text-center my-3 backdrop-blur-sm">
+        <div className="bg-zinc-100/80 dark:bg-zinc-950/80 border border-amber-500/30 rounded-xl p-6 text-center my-3 backdrop-blur-sm">
           <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-          <h4 className="text-amber-500 font-bold text-sm mb-2">Spoiler Warning</h4>
-          <p className="text-zinc-400 text-xs mb-4">This post contains story spoilers.</p>
+          <h4 className="text-amber-600 dark:text-amber-500 font-bold text-sm mb-2">Spoiler Warning</h4>
+          <p className="text-zinc-600 dark:text-zinc-400 text-xs mb-4">This post contains story spoilers.</p>
           <button
             onClick={() => revealSpoiler(post.id)}
-            className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
+            className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
           >
             Reveal Spoiler
           </button>
@@ -118,13 +118,13 @@ export default function PostCard({
       ) : (
         <>
           {post.content && (
-            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-medium mb-4">
+            <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-medium mb-4">
               {renderContent(post.content)}
             </p>
           )}
 
           {post.image_url && (
-            <div className="mb-4 rounded-xl overflow-hidden border border-zinc-800/50">
+            <div className="mb-4 rounded-xl overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50">
               <img
                 src={post.image_url}
                 alt="Post attachment"
@@ -135,7 +135,7 @@ export default function PostCard({
         </>
       )}
 
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-800/50">
+      <div className="flex items-center justify-between pt-3 border-t border-zinc-200/50 dark:border-zinc-800/50">
         <div className="flex items-center gap-4">
           <button
             onClick={() => toggleLike(post.id, post.profiles.id, post.hasLiked)}
@@ -153,7 +153,7 @@ export default function PostCard({
 
           <button
             onClick={() => toggleCommentsVisibility(post.id)}
-            className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
           >
             <span className="text-base leading-none"></span>
             <span>
@@ -164,7 +164,7 @@ export default function PostCard({
 
         <button
           onClick={() => setPostToShare(post)}
-          className="text-xs font-bold text-zinc-500 hover:text-indigo-400 transition-colors flex items-center gap-1.5"
+          className="text-xs font-bold text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1.5"
         >
           ➦ Share
         </button>

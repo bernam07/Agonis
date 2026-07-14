@@ -324,10 +324,10 @@ export default function Profile({
         <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-4 border-l-2 border-indigo-500 pl-3">Achievements</h3>
         <div className="flex gap-3 flex-wrap">
           {badges.map((b) => (
-            <div key={b.name} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex items-center gap-3 w-max group hover:border-indigo-500 transition-colors shadow-sm">
+            <div key={b.name} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 flex items-center gap-3 w-max group hover:border-indigo-500 transition-colors shadow-sm">
               <div className="text-2xl group-hover:scale-110 group-hover:rotate-6 transition-transform">{b.icon}</div>
               <div>
-                <div className="font-bold text-zinc-200 text-sm group-hover:text-indigo-400 transition-colors">{b.name}</div>
+                <div className="font-bold text-zinc-800 dark:text-zinc-200 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{b.name}</div>
                 <div className="text-[10px] text-zinc-500 font-medium">{b.desc}</div>
               </div>
             </div>
@@ -362,12 +362,12 @@ export default function Profile({
       {/* ===== CORPO DO PERFIL ===== */}
       {!canViewLibrary ? (
         <div className="flex flex-col items-center">
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-12 text-center w-full max-w-lg mx-auto flex flex-col items-center">
-            <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 mb-4">
+          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center w-full max-w-lg mx-auto flex flex-col items-center">
+            <div className="w-16 h-16 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 mb-4">
               <Lock className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-black text-white mb-2">This profile is private</h3>
-            <p className="text-zinc-400 text-sm font-medium">Follow @{profile.username} to see their game library and posts.</p>
+            <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-2">This profile is private</h3>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium">Follow @{profile.username} to see their game library and posts.</p>
           </div>
         </div>
       ) : (
@@ -375,30 +375,30 @@ export default function Profile({
           {renderBadges()}
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button onClick={() => setViewMode('library')} className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center transition-all cursor-pointer hover:border-indigo-500 hover:bg-zinc-800">
+            <button onClick={() => setViewMode('library')} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl flex flex-col items-center transition-all cursor-pointer hover:border-indigo-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
               <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase flex items-center gap-1">Total Games</span>
-              <span className="text-3xl font-black text-white">{libStats.total}</span>
+              <span className="text-3xl font-black text-zinc-900 dark:text-white">{libStats.total}</span>
             </button>
-            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
               <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Completed</span>
-              <span className="text-3xl font-black text-emerald-400">{libStats.completed}</span>
+              <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{libStats.completed}</span>
             </div>
-            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
               <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Backlog</span>
-              <span className="text-3xl font-black text-amber-400">{libStats.backlog}</span>
+              <span className="text-3xl font-black text-amber-600 dark:text-amber-400">{libStats.backlog}</span>
             </div>
-            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl flex flex-col items-center">
               <span className="text-zinc-500 font-semibold mb-1 text-xs uppercase">Avg Rating</span>
-              <span className="text-3xl font-black text-amber-400 mb-2 flex items-center gap-2">{libStats.averageRating}</span>
+              <span className="text-3xl font-black text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-2">{libStats.averageRating}</span>
               {libStats.averageRating > 0 && <StarDisplay rating={libStats.averageRating} size={16} />}
             </div>
           </div>
 
           <div>
-            <div className="flex gap-4 border-b border-zinc-800 mb-6 mt-8 overflow-x-auto custom-scrollbar">
-              <button onClick={() => setViewMode('activity')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'activity' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Feed Activity</button>
-              <button onClick={() => setViewMode('library')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'library' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Game Collection</button>
-              <button onClick={() => setViewMode('lists')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'lists' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Custom Lists ({lists.length})</button>
+            <div className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-6 mt-8 overflow-x-auto custom-scrollbar">
+              <button onClick={() => setViewMode('activity')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'activity' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Feed Activity</button>
+              <button onClick={() => setViewMode('library')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'library' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Game Collection</button>
+              <button onClick={() => setViewMode('lists')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'lists' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Custom Lists ({lists.length})</button>
             </div>
 
             {/* ===== ABAS CONTEÚDO ===== */}

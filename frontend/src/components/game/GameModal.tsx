@@ -124,8 +124,17 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
       alert("You need to 'Save Changes' and add this game to your library first before putting it in a list!")
       return
     }
-    const { error } = await supabase.from('list_games').insert({ list_id: selectedListId, game_id: userGame.id })
-    if (!error) {
+    const { error } = await supabase.from('list_games').insert([{
+      list_id: selectedListId,
+      igdb_id: igdbId,
+      game_name: game.name || game.game_name,
+      game_cover: game.cover?.url || game.game_cover || null,
+    }])
+
+    if (error) {
+      console.error(error)
+      alert("Error adding to list.")
+    } else {
       alert("Game added to the list!")
       setSelectedListId("")
     }
@@ -192,9 +201,9 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
 
   return (
     <div className={`fixed inset-0 z-50 p-4 sm:p-6 bg-zinc-950/80 backdrop-blur-md flex items-center justify-center ${showShare ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-      <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 text-zinc-100 m-auto shadow-2xl relative">
+      <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 m-auto shadow-2xl relative">
         <div className="flex gap-5 mb-6 shrink-0">
-          <div className="w-28 aspect-3/4 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shrink-0 shadow-lg">
+          <div className="w-28 aspect-3/4 bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shrink-0 shadow-lg">
             {displayGame.cover?.url && (
               <img
                 src={displayGame.cover.url.replace('t_thumb', 't_cover_big')}
@@ -204,7 +213,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
             )}
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <h2 className="text-2xl font-black text-white mb-2 leading-tight truncate">
+            <h2 className="text-2xl font-black text-zinc-900 dark:text-white mb-2 leading-tight truncate">
               {displayGame.name || displayGame.game_name}
             </h2>
             <div className="flex gap-1 mb-2">
@@ -212,7 +221,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
                 const fillWidth = rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%';
                 return (
                   <div key={star} className={`relative w-6 h-6 ${!isReadOnly && 'hover:scale-110'} transition-transform`}>
-                    <Star className="absolute top-0 left-0 w-6 h-6 text-zinc-700" />
+                    <Star className="absolute top-0 left-0 w-6 h-6 text-zinc-300 dark:text-zinc-700" />
                     <div className="absolute top-0 left-0 h-full overflow-hidden text-amber-400 pointer-events-none" style={{ width: fillWidth }}>
                       <Star className="w-6 h-6 max-w-none" fill="currentColor" />
                     </div>
@@ -229,11 +238,11 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
           </div>
         </div>
 
-        <div className="flex border-b border-zinc-800 mb-6 gap-6 overflow-x-auto custom-scrollbar shrink-0">
-          <button onClick={() => setActiveTab('track')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'track' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Track Status</button>
-          <button onClick={() => setActiveTab('details')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'details' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Game Details</button>
-          <button onClick={() => setActiveTab('screenshots')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'screenshots' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Screenshots</button>
-          <button onClick={() => setActiveTab('community')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'community' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Community ({communityReviews.length})</button>
+        <div className="flex border-b border-zinc-200 dark:border-zinc-800 mb-6 gap-6 overflow-x-auto custom-scrollbar shrink-0">
+          <button onClick={() => setActiveTab('track')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'track' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Track Status</button>
+          <button onClick={() => setActiveTab('details')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'details' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Game Details</button>
+          <button onClick={() => setActiveTab('screenshots')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'screenshots' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Screenshots</button>
+          <button onClick={() => setActiveTab('community')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${activeTab === 'community' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Community ({communityReviews.length})</button>
         </div>
 
         <div className="mt-2 space-y-4 pb-4">
@@ -273,15 +282,15 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
         </div>
 
         {userGame && (
-          <div className="mt-6 pt-4 border-t border-zinc-800 shrink-0">
-            <button onClick={() => setShowShare(true)} className="w-full bg-indigo-950/30 border border-indigo-500/30 hover:border-indigo-500 text-indigo-300 hover:text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
+          <div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
+            <button onClick={() => setShowShare(true)} className="w-full bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/50 dark:border-indigo-500/30 hover:border-indigo-500 text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
               Export Review Card
             </button>
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-6 pt-4 border-t border-zinc-800 shrink-0">
-          <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors">Close</button>
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
+          <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-sm font-bold transition-colors">Close</button>
           {!isReadOnly && (
             <div className="flex gap-3">
               {userGame && (

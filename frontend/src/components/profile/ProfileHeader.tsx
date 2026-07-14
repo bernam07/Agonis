@@ -44,14 +44,14 @@ export default function ProfileHeader({
     <>
       {!isCurrentUser && userId && (
         <div>
-          <button onClick={onBack} className="text-zinc-400 hover:text-white font-bold text-sm flex items-center gap-2 transition-colors">
+          <button onClick={onBack} className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white font-bold text-sm flex items-center gap-2 transition-colors">
             ← Back to Feed
           </button>
         </div>
       )}
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative">
-        <div className="w-32 h-32 rounded-full bg-zinc-800 border-4 border-zinc-950 flex items-center justify-center text-5xl font-black text-zinc-500 overflow-hidden shrink-0 shadow-xl">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative">
+        <div className="w-32 h-32 rounded-full bg-zinc-200 dark:bg-zinc-800 border-4 border-zinc-50 dark:border-zinc-950 flex items-center justify-center text-5xl font-black text-zinc-500 overflow-hidden shrink-0 shadow-xl">
           {profile.avatar_url ? (
             <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
           ) : (
@@ -61,13 +61,13 @@ export default function ProfileHeader({
 
         <div className="flex-1 w-full text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start mb-2">
-            <h2 className="text-3xl font-black text-white">@{profile.username}</h2>
+            <h2 className="text-3xl font-black text-zinc-900 dark:text-white">@{profile.username}</h2>
             {isCurrentUser ? (
-              <button onClick={() => setIsEditing(true)} className="text-xs font-bold text-zinc-400 hover:text-white bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-lg transition-colors">
+              <button onClick={() => setIsEditing(true)} className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 rounded-lg transition-colors">
                 Settings
               </button>
             ) : (
-              <button onClick={toggleFollow} className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-colors ${isFollowing || isRequested ? 'bg-zinc-800 text-zinc-300 hover:bg-rose-500 hover:text-white' : 'bg-white text-zinc-950 hover:bg-zinc-200'}`}>
+              <button onClick={toggleFollow} className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-colors ${isFollowing || isRequested ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-rose-500 hover:text-white' : 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200'}`}>
                 {isFollowing ? 'Following' : isRequested ? 'Requested' : 'Follow'}
               </button>
             )}
@@ -75,15 +75,15 @@ export default function ProfileHeader({
 
           <div className="flex gap-5 justify-center md:justify-start mb-4 text-sm">
             <button onClick={() => openFollowList('followers')} className={`flex gap-1 ${canViewLibrary ? 'hover:opacity-80' : 'cursor-default'}`}>
-              <span className="font-bold text-white">{followersCount}</span> <span className="text-zinc-400">followers</span>
+              <span className="font-bold text-zinc-900 dark:text-white">{followersCount}</span> <span className="text-zinc-600 dark:text-zinc-400">followers</span>
             </button>
             <button onClick={() => openFollowList('following')} className={`flex gap-1 ${canViewLibrary ? 'hover:opacity-80' : 'cursor-default'}`}>
-              <span className="font-bold text-white">{followingCount}</span> <span className="text-zinc-400">following</span>
+              <span className="font-bold text-zinc-900 dark:text-white">{followingCount}</span> <span className="text-zinc-600 dark:text-zinc-400">following</span>
             </button>
           </div>
 
           {profile.bio && (
-            <p className="text-zinc-300 text-sm leading-relaxed max-w-2xl bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50 mb-2">
+            <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed max-w-2xl bg-zinc-50 dark:bg-zinc-950/50 p-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 mb-2">
               {profile.bio}
             </p>
           )}

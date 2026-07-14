@@ -156,24 +156,24 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
     <div className="relative" ref={menuRef}>
       <button
         onClick={toggleDropdown}
-        className="relative p-2 text-zinc-400 hover:text-white transition-colors"
+        className="relative p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-zinc-950">
+          <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-zinc-50 dark:border-zinc-950">
             {unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50">
-          <div className="p-4 border-b border-zinc-800 bg-zinc-950/50 flex justify-between items-center">
-            <h3 className="text-sm font-bold text-white">Notifications</h3>
+        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50">
+          <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 flex justify-between items-center">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Notifications</h3>
             {notifications.length > 0 && (
               <button
                 onClick={clearAllNotifications}
-                className="text-[10px] font-bold text-zinc-500 hover:text-rose-500 bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 rounded-md border border-zinc-800 transition-colors"
+                className="text-[10px] font-bold text-zinc-500 hover:text-rose-500 bg-white hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 transition-colors"
               >
                 Clear All
               </button>
@@ -193,9 +193,9 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                     setIsOpen(false)
                     if (notif.profiles?.id) onUserClick(notif.profiles.id)
                   }}
-                  className={`group relative p-4 border-b border-zinc-800/50 flex items-start gap-3 cursor-pointer hover:bg-zinc-800 transition-colors ${!notif.is_read ? 'bg-indigo-950/10' : ''}`}
+                  className={`group relative p-4 border-b border-zinc-200/50 dark:border-zinc-800/50 flex items-start gap-3 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ${!notif.is_read ? 'bg-indigo-50 dark:bg-indigo-950/10' : ''}`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden shrink-0 mt-0.5">
+                  <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden shrink-0 mt-0.5">
                     {notif.profiles?.avatar_url ? (
                       <img src={notif.profiles.avatar_url} className="w-full h-full object-cover" />
                     ) : (
@@ -206,10 +206,10 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                   </div>
 
                   <div className="text-sm flex-1 pr-4">
-                    <span className="font-bold text-zinc-200">
+                    <span className="font-bold text-zinc-800 dark:text-zinc-200">
                       @{notif.profiles?.username || 'unknown'}{' '}
                     </span>
-                    <span className="text-zinc-400">
+                    <span className="text-zinc-600 dark:text-zinc-400">
                       {notif.type === 'like' && 'liked your post.'}
                       {notif.type === 'follow' && 'started following you.'}
                       {notif.type === 'follow_request' && 'sent you a follow request.'}
@@ -234,7 +234,7 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                             e.stopPropagation()
                             handleRejectRequest(notif)
                           }}
-                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold px-3 py-1 rounded-md transition-colors"
+                          className="bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-[10px] font-bold px-3 py-1 rounded-md transition-colors"
                         >
                           Reject
                         </button>

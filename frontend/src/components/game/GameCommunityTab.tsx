@@ -31,30 +31,30 @@ export default function GameCommunityTab({ communityLoading, communityAvg, commu
 
   return (
     <div className="space-y-6">
-      <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+      <div className="bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
         <span className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-2">Global Agonis Rating</span>
-        <div className="text-5xl font-black text-amber-400 drop-shadow-md flex items-baseline gap-1">
-          {communityAvg} <span className="text-2xl text-zinc-600">/ 5</span>
+        <div className="text-5xl font-black text-amber-500 dark:text-amber-400 drop-shadow-md flex items-baseline gap-1">
+          {communityAvg} <span className="text-2xl text-zinc-400 dark:text-zinc-600">/ 5</span>
         </div>
       </div>
 
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Community Reviews</h4>
-          <div className="h-px flex-1 bg-zinc-800"></div>
+          <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Community Reviews</h4>
+          <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
         </div>
 
         {communityReviews.length === 0 ? (
-          <div className="text-center py-8 text-zinc-600 font-medium text-sm border-2 border-dashed border-zinc-800 rounded-2xl bg-zinc-950/30">
+          <div className="text-center py-8 text-zinc-500 dark:text-zinc-600 font-medium text-sm border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50 dark:bg-zinc-950/30">
             No written reviews yet. Be the first to share your thoughts!
           </div>
         ) : (
           <div className="space-y-3">
             {communityReviews.map((rev, idx) => (
-              <div key={idx} className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-4">
+              <div key={idx} className="bg-white dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden shrink-0 border border-zinc-700">
+                    <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden shrink-0 border border-zinc-300 dark:border-zinc-700">
                       {rev.profiles?.avatar_url ? (
                         <img src={rev.profiles.avatar_url} className="w-full h-full object-cover" />
                       ) : (
@@ -63,17 +63,17 @@ export default function GameCommunityTab({ communityLoading, communityAvg, commu
                         </div>
                       )}
                     </div>
-                    <span className="text-sm font-bold text-zinc-200">@{rev.profiles?.username || 'unknown'}</span>
+                    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">@{rev.profiles?.username || 'unknown'}</span>
                   </div>
                   {rev.rating > 0 && (
-                    <div className="flex items-center gap-0.5 text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
+                    <div className="flex items-center gap-0.5 text-amber-500 dark:text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star key={star} className="w-3 h-3" fill={rev.rating >= star ? 'currentColor' : 'none'} strokeWidth={rev.rating >= star ? 0 : 2} />
                       ))}
                     </div>
                   )}
                 </div>
-                <p className="text-sm text-zinc-300 leading-relaxed font-medium whitespace-pre-wrap">{rev.review}</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium whitespace-pre-wrap">{rev.review}</p>
               </div>
             ))}
           </div>

@@ -38,19 +38,19 @@ export default function CreatePostForm({
 }: CreatePostFormProps) {
 
   return (
-    <div className="mb-8 bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-sm">
+    <div className="mb-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
       <form onSubmit={createPost} className="flex flex-col gap-3">
         <label className="flex items-center gap-2 mt-3 cursor-pointer">
           <input
             type="checkbox"
             checked={hasSpoilers}
             onChange={(e) => setHasSpoilers(e.target.checked)}
-            className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
+            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
           />
-          <span className="text-xs font-bold text-amber-500">Mark as Spoiler</span>
+          <span className="text-xs font-bold text-amber-600 dark:text-amber-500">Mark as Spoiler</span>
         </label>
         {selectedGame && (
-          <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 p-2 rounded-xl w-max pr-4">
+          <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-2 rounded-xl w-max pr-4">
             {selectedGame.cover?.url && (
               <img
                 src={selectedGame.cover.url.replace('t_thumb', 't_cover_small')}
@@ -58,7 +58,7 @@ export default function CreatePostForm({
                 className="w-8 h-10 object-cover rounded-md"
               />
             )}
-            <span className="text-xs font-bold text-zinc-300">{selectedGame.name}</span>
+            <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{selectedGame.name}</span>
             <button
               type="button"
               onClick={() => setSelectedGame(null)}
@@ -73,7 +73,7 @@ export default function CreatePostForm({
           onChange={(e) => setContent(e.target.value)}
           placeholder="What are you playing? Share your thoughts or screenshots..."
           rows={3}
-          className="w-full bg-transparent text-zinc-100 placeholder-zinc-600 outline-none resize-none text-sm font-medium mt-1"
+          className="w-full bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none resize-none text-sm font-medium mt-1"
         />
 
         {imageFile && (
@@ -81,7 +81,7 @@ export default function CreatePostForm({
             <img
               src={URL.createObjectURL(imageFile)}
               alt="Preview"
-              className="h-32 rounded-lg border border-zinc-800 object-cover"
+              className="h-32 rounded-lg border border-zinc-200 dark:border-zinc-800 object-cover"
             />
             <button
               type="button"
@@ -94,7 +94,7 @@ export default function CreatePostForm({
         )}
 
         {showPicker && (
-          <div className="mt-2 p-4 bg-zinc-950 border border-zinc-800 rounded-2xl">
+          <div className="mt-2 p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
             {library.length === 0 ? (
               <p className="text-zinc-500 text-xs font-medium text-center py-4">
                 Add games to your library first to tag them!
@@ -111,7 +111,7 @@ export default function CreatePostForm({
                     }}
                     className="shrink-0 w-16 group flex flex-col items-center"
                   >
-                    <div className="w-14 h-20 bg-zinc-800 rounded-lg overflow-hidden border border-zinc-800 group-hover:border-indigo-500 transition-colors">
+                    <div className="w-14 h-20 bg-zinc-200 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 group-hover:border-indigo-500 transition-colors">
                       {game.cover?.url && (
                         <img
                           src={game.cover.url.replace('t_thumb', 't_cover_small')}
@@ -120,7 +120,7 @@ export default function CreatePostForm({
                         />
                       )}
                     </div>
-                    <span className="text-[10px] font-bold text-zinc-500 mt-2 truncate w-full text-center group-hover:text-zinc-300">
+                    <span className="text-[10px] font-bold text-zinc-500 mt-2 truncate w-full text-center group-hover:text-zinc-700 dark:group-hover:text-zinc-300">
                       {game.name}
                     </span>
                   </button>
@@ -130,21 +130,21 @@ export default function CreatePostForm({
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-3 border-t border-zinc-800/50 mt-2">
+        <div className="flex justify-between items-center pt-3 border-t border-zinc-200/50 dark:border-zinc-800/50 mt-2">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setShowPicker(!showPicker)}
               className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
                 showPicker
-                  ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
-                  : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-300 hover:border-zinc-700'
+                  ? 'bg-zinc-200 text-zinc-800 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700'
+                  : 'bg-transparent text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700'
               }`}
             >
               + Tag Game
             </button>
 
-            <label className="text-xs font-bold text-zinc-400 hover:text-indigo-400 bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-indigo-500 transition-colors cursor-pointer flex items-center gap-2">
+            <label className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-zinc-50 dark:bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 transition-colors cursor-pointer flex items-center gap-2">
               Image
               <input
                 type="file"

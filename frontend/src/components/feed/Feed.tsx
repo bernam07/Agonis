@@ -343,7 +343,7 @@ export default function Feed({
               e.stopPropagation()
               handleMentionClick(part)
             }}
-            className="text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer transition-colors"
+            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 hover:underline cursor-pointer transition-colors"
           >
             {part}
           </span>
@@ -372,7 +372,7 @@ export default function Feed({
             <PostSkeleton />
           </>
         ) : posts.length === 0 ? (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-10 text-center text-zinc-500 font-medium">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 text-center text-zinc-500 font-medium">
             No posts yet. Be the first to share something!
           </div>
         ) : (
@@ -405,7 +405,7 @@ export default function Feed({
           <button
             onClick={() => fetchPosts(currentUser?.id, page + 1)}
             disabled={loadingMore}
-            className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500 text-zinc-300 font-bold px-6 py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center gap-2"
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 text-zinc-700 dark:text-zinc-300 font-bold px-6 py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center gap-2"
           >
             {loadingMore ? 'Loading more...' : '↓ Load More'}
           </button>

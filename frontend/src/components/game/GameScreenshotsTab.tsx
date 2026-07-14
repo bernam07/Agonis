@@ -24,21 +24,21 @@ export default function GameScreenshotsTab({ screenshots, uploadingScreenshot, h
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
-        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Your Gallery</h4>
-        <label className="text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-sm">
+        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Your Gallery</h4>
+        <label className="text-xs font-bold text-zinc-800 dark:text-white bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-sm">
           {uploadingScreenshot ? 'Uploading...' : '+ Upload Image'}
           <input type="file" accept="image/*" className="hidden" onChange={handleScreenshotUpload} disabled={uploadingScreenshot} />
         </label>
       </div>
 
       {screenshots.length === 0 ? (
-        <div className="text-center py-12 text-zinc-600 font-medium text-sm border-2 border-dashed border-zinc-800 rounded-2xl bg-zinc-950/50">
+        <div className="text-center py-12 text-zinc-500 dark:text-zinc-600 font-medium text-sm border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50 dark:bg-zinc-950/50">
           No screenshots yet. <br /> Upload one or attach an image to a feed post!
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {screenshots.map((shot) => (
-            <div key={shot.id} className="rounded-xl overflow-hidden border border-zinc-800 aspect-video bg-zinc-950 shadow-md">
+            <div key={shot.id} className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 aspect-video bg-zinc-100 dark:bg-zinc-950 shadow-md">
               <img src={shot.url} alt="Game screenshot" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
             </div>
           ))}

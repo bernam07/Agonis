@@ -33,12 +33,12 @@ export default function GameDetailsTab({ displayGame, detailsLoading }: GameDeta
       {displayGame.summary && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">
+            <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               About
             </h4>
-            <div className="h-px flex-1 bg-zinc-800"></div>
+            <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
           </div>
-          <p className="text-zinc-300 text-sm leading-relaxed font-medium bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+          <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed font-medium bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
             {displayGame.summary}
           </p>
         </div>
@@ -47,14 +47,14 @@ export default function GameDetailsTab({ displayGame, detailsLoading }: GameDeta
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {displayGame.platforms && displayGame.platforms.length > 0 && (
           <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">
+            <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
               Platforms
             </h4>
             <div className="flex flex-wrap gap-2">
               {displayGame.platforms.map((p: any) => (
                 <span
                   key={p.id}
-                  className="text-[11px] bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-lg font-bold shadow-sm"
+                  className="text-[11px] bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 rounded-lg font-bold shadow-sm"
                 >
                   {p.name}
                 </span>
@@ -63,7 +63,7 @@ export default function GameDetailsTab({ displayGame, detailsLoading }: GameDeta
           </div>
         )}
         <div>
-          <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">
+          <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
             Get this game
           </h4>
           <div className="flex gap-2">

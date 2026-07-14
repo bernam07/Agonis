@@ -107,18 +107,18 @@ export default function Auth({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center p-4 relative">
+    <div className="min-h-dvh bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4 relative transition-colors duration-300">
       <button
         onClick={onBack}
-        className="absolute top-8 left-4 md:left-8 text-zinc-500 hover:text-white font-bold text-sm flex items-center gap-2 transition-colors"
+        className="absolute top-8 left-4 md:left-8 text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-bold text-sm flex items-center gap-2 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> Back to Home
       </button>
 
-      <div className="w-full max-w-md p-8 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl">
+      <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black tracking-tighter text-indigo-500 mb-2">AGONIS</h1>
-          <p className="text-zinc-400 text-sm font-medium">
+          <h1 className="text-3xl font-black tracking-tighter text-indigo-600 dark:text-indigo-500 mb-2">AGONIS</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium">
             {isResetting ? 'Reset your password' : 'Track, rate, and discuss your games'}
           </p>
         </div>
@@ -142,7 +142,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
           className="flex flex-col gap-4"
         >
           <div>
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">
+            <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 pl-1">
               Email Address
             </label>
             <input
@@ -153,13 +153,13 @@ export default function Auth({ onBack }: { onBack: () => void }) {
                 if (errorMsg) setErrorMsg(null)
               }}
               placeholder="name@example.com"
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
             />
           </div>
 
           {!isResetting && (
             <div>
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 pl-1">
+              <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 pl-1">
                 Password
               </label>
               <input
@@ -170,7 +170,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
                   if (errorMsg) setErrorMsg(null)
                 }}
                 placeholder="••••••••"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-indigo-500 transition-colors font-medium text-sm"
               />
             </div>
           )}
@@ -192,7 +192,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
                     setErrorMsg(null)
                     setSuccessMsg(null)
                   }}
-                  className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-3 rounded-xl transition-colors text-sm border border-zinc-700"
+                  className="w-full bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 font-bold py-3 rounded-xl transition-colors text-sm border border-zinc-300 dark:border-zinc-700"
                 >
                   Back to Login
                 </button>
@@ -210,7 +210,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
                   type="button"
                   onClick={handleSignUp}
                   disabled={loading}
-                  className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm border border-zinc-700"
+                  className="w-full bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm border border-zinc-300 dark:border-zinc-700"
                 >
                   Create Account
                 </button>
@@ -221,7 +221,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
                     setErrorMsg(null)
                     setSuccessMsg(null)
                   }}
-                  className="text-zinc-500 hover:text-zinc-300 text-xs font-bold mt-2 transition-colors"
+                  className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 text-xs font-bold mt-2 transition-colors"
                 >
                   Forgot your password?
                 </button>

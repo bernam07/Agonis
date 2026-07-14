@@ -43,12 +43,12 @@ export default function ReviewFormTab({
   
   if (isReadOnly) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 text-center bg-zinc-950/50 rounded-2xl border border-zinc-800/50">
-        <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 mb-4">
+      <div className="flex flex-col items-center justify-center h-48 text-center bg-zinc-50 dark:bg-zinc-950/50 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
+        <div className="w-16 h-16 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 mb-4">
           <Lock className="w-8 h-8" />
         </div>
-        <p className="text-zinc-400 text-sm font-bold">Viewing another user's log.</p>
-        <p className="text-zinc-600 text-xs mt-1">Editing is disabled.</p>
+        <p className="text-zinc-600 dark:text-zinc-400 text-sm font-bold">Viewing another user's log.</p>
+        <p className="text-zinc-500 dark:text-zinc-600 text-xs mt-1">Editing is disabled.</p>
       </div>
     )
   }
@@ -59,7 +59,7 @@ export default function ReviewFormTab({
         <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">
           Status
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-5 bg-zinc-950 p-1 border border-zinc-800 rounded-xl gap-1">
+        <div className="grid grid-cols-2 sm:grid-cols-5 bg-zinc-100 dark:bg-zinc-950 p-1 border border-zinc-200 dark:border-zinc-800 rounded-xl gap-1">
           {STATUSES.map((s) => (
             <button
               key={s.id}
@@ -68,7 +68,7 @@ export default function ReviewFormTab({
               className={`py-2.5 px-2 text-center rounded-lg font-bold text-[11px] sm:text-xs transition-colors truncate ${
                 status === s.id
                   ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-900'
               }`}
             >
               {s.label}
@@ -78,7 +78,7 @@ export default function ReviewFormTab({
       </div>
 
       {myLists.length > 0 && (
-        <div className="mb-6 bg-zinc-950/40 border border-zinc-800/60 p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-end sm:items-center justify-between">
+        <div className="mb-6 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200/60 dark:border-zinc-800/60 p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-end sm:items-center justify-between">
           <div className="flex-1 w-full min-w-0">
             <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">
               Add to Custom List
@@ -86,7 +86,7 @@ export default function ReviewFormTab({
             <select
               value={selectedListId}
               onChange={(e) => setSelectedListId(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:border-indigo-500 transition-colors cursor-pointer appearance-none truncate"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:border-indigo-500 transition-colors cursor-pointer appearance-none truncate"
             >
               <option value="">Select a list...</option>
               {myLists.map((list) => (
@@ -116,7 +116,7 @@ export default function ReviewFormTab({
           onChange={(e) => setReview(e.target.value)}
           placeholder="Write your logs or thoughts here..."
           rows={5}
-          className="w-full p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-200 outline-none resize-none text-sm font-medium focus:border-indigo-500 transition-colors shadow-inner"
+          className="w-full p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 outline-none resize-none text-sm font-medium focus:border-indigo-500 transition-colors shadow-inner"
         />
       </div>
     </div>

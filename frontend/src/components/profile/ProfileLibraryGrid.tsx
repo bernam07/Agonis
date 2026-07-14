@@ -34,9 +34,9 @@ export default function ProfileLibraryGrid({
   return (
     <div className="space-y-6">
       {userLibrary.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-3 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800/50 justify-between items-center">
+        <div className="flex flex-col sm:flex-row gap-3 bg-zinc-100/50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 justify-between items-center">
           <div className="flex gap-3 w-full sm:w-auto">
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs font-bold px-3 py-2 rounded-xl outline-none focus:border-indigo-500 transition-colors flex-1 sm:flex-none">
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold px-3 py-2 rounded-xl outline-none focus:border-indigo-500 transition-colors flex-1 sm:flex-none">
               <option value="all">All Statuses</option>
               <option value="playing">Playing</option>
               <option value="backlog">Backlog</option>
@@ -44,7 +44,7 @@ export default function ProfileLibraryGrid({
               <option value="100_percent">100%</option>
               <option value="dropped">Dropped</option>
             </select>
-            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as any)} className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs font-bold px-3 py-2 rounded-xl outline-none focus:border-indigo-500 transition-colors flex-1 sm:flex-none">
+            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as any)} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold px-3 py-2 rounded-xl outline-none focus:border-indigo-500 transition-colors flex-1 sm:flex-none">
               <option value="recent">Recently Added</option>
               <option value="rating">Highest Rating</option>
               <option value="name">Name (A-Z)</option>
@@ -58,11 +58,11 @@ export default function ProfileLibraryGrid({
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
           {filteredAndSortedLibrary.map((game) => (
-            <div key={game.id} onClick={() => handleGameClick(game)} className="cursor-pointer bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex flex-col relative group transition-transform hover:scale-105">
-              <span className="absolute top-3 right-3 z-10 text-[9px] font-black bg-zinc-950/90 text-zinc-300 border border-zinc-800 px-1.5 py-0.5 rounded capitalize">
+            <div key={game.id} onClick={() => handleGameClick(game)} className="cursor-pointer bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2 flex flex-col relative group transition-transform hover:scale-105">
+              <span className="absolute top-3 right-3 z-10 text-[9px] font-black bg-white/90 dark:bg-zinc-950/90 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 px-1.5 py-0.5 rounded capitalize">
                 {game.status.replace('_', ' ')}
               </span>
-              <div className="aspect-3/4 rounded-lg overflow-hidden bg-zinc-950 mb-2">
+              <div className="aspect-3/4 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-950 mb-2">
                 {game.cover?.url ? <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full h-full object-cover" /> : null}
               </div>
               <div className="flex justify-center mt-auto">

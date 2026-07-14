@@ -1,16 +1,33 @@
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn(),
-    },
-    from: vi.fn(),
+const { supabaseMock } = vi.hoisted(() => {
+  const userGamesData = [
+    { id: 1, igdb_id: 1, status: 'completed', rating: 5, created_at: '2026-01-02T00:00:00.000Z' },
+    { id: 2, igdb_id: 2, status: 'backlog', rating: 2, created_at: '2026-01-01T00:00:00.000Z' },
+  ]
+  const igdbGames = [
+    { id: 1, name: 'Game One', cover: { url: 'https://example.com/t_thumb.jpg' } },
+    { id: 2, name: 'Game Two', cover: { url: 'https://example.com/t_thumb.jpg' } },
+  ]
+
+  const supabaseMock = {
+    from: vi.fn((table: string) => {
+      if (table === 'user_games') {
+        return { select: () => ({ eq: () => Promise.resolve({ data: userGamesData, error: null }) }) }
+      }
+      return {}
+    }),
     functions: {
-      invoke: vi.fn(),
+      invoke: vi.fn().mockResolvedValue({ data: igdbGames, error: null }),
     },
-  },
+  }
+
+  return { supabaseMock }
+})
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: supabaseMock,
 }))
 
 vi.mock('../../components/game/GameModal', () => ({
@@ -18,38 +35,16 @@ vi.mock('../../components/game/GameModal', () => ({
 }))
 
 import MyLibrary from '../../components/library/MyLibrary'
-import { renderIntoDocument } from '../testUtils'
+import { renderIntoDocument, waitFor } from '../testUtils'
 
 describe('MyLibrary', () => {
   it('filters games by status', async () => {
-    const setLibrary = vi.fn()
-    const library = [
-      {
-        id: 1,
-        igdb_id: 1,
-        name: 'Game One',
-        status: 'completed',
-        rating: 5,
-        cover: { url: 'https://example.com/t_thumb.jpg' },
-      },
-      {
-        id: 2,
-        igdb_id: 2,
-        name: 'Game Two',
-        status: 'backlog',
-        rating: 2,
-        cover: { url: 'https://example.com/t_thumb.jpg' },
-      },
-    ] as any[]
+    const { container, cleanup } = renderIntoDocument(<MyLibrary userId="user-1" />)
 
-    const { container, cleanup } = renderIntoDocument(<MyLibrary library={library} setLibrary={setLibrary} />)
-
-    await act(async () => {
-      await Promise.resolve()
+    await waitFor(() => {
+      expect(container.textContent).toContain('Game One')
+      expect(container.textContent).toContain('Game Two')
     })
-
-    expect(container.textContent).toContain('Game One')
-    expect(container.textContent).toContain('Game Two')
 
     const completedButton = Array.from(container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('completed'),

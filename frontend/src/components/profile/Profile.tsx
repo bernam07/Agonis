@@ -15,9 +15,10 @@
 */
 
 import { useState, useEffect, useMemo } from 'react'
+import { toast } from 'sonner'
 import { supabase } from '../../lib/supabase'
 import GameModal from '../game/GameModal'
-import { Trophy, Star, Users, Flame, Lock } from 'lucide-react'
+import { Trophy, Star, Users, Flame, Lock, Crown } from 'lucide-react'
 import StarDisplay from '../common/StarDisplay'
 import ProfileHeader from './ProfileHeader'
 import ProfileActivity from './ProfileActivity'
@@ -25,6 +26,11 @@ import ProfileCustomLists from './ProfileCustomLists'
 import ProfileEditForm from './ProfileEditForm'
 import ProfileLibraryGrid from './ProfileLibraryGrid'
 import FollowListModal from './FollowListModal'
+import PremiumTab from './PremiumTab'
+import ProfileInsights from './ProfileInsights'
+import { confirmToast } from '../../lib/confirmToast'
+import { FREE_LIST_LIMIT } from '../../lib/plans'
+import { useInvalidateUserGames } from '../../hooks/useUserGames'
 
 export default function Profile({
   userId,
@@ -43,7 +49,7 @@ export default function Profile({
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const [viewMode, setViewMode] = useState<'activity' | 'library' | 'lists'>('activity')
+  const [viewMode, setViewMode] = useState<'activity' | 'library' | 'lists' | 'insights' | 'premium'>('activity')
 
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [sortOrder, setSortOrder] = useState<'recent' | 'rating' | 'name'>('recent')
@@ -69,9 +75,16 @@ export default function Profile({
   const [expandedListId, setExpandedListId] = useState<string | null>(null)
   const [listGames, setListGames] = useState<any[]>([])
 
+  const invalidateUserGames = useInvalidateUserGames()
+
   useEffect(() => {
     loadProfile()
   }, [userId])
+
+  useEffect(() => {
+    if (viewMode === 'premium' && profile?.is_premium) setViewMode('activity')
+    if (viewMode === 'insights' && !profile?.is_premium) setViewMode('activity')
+  }, [viewMode, profile?.is_premium])
 
   const loadProfile = async () => {
     setLoading(true)
@@ -178,10 +191,12 @@ export default function Profile({
     }
   }
 
-  const deletePost = async (postId: string) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) return
-    await supabase.from('posts').delete().eq('id', postId)
-    setMyPosts(myPosts.filter((p) => p.id !== postId))
+  const deletePost = (postId: string) => {
+    confirmToast('Delete this post?', async () => {
+      await supabase.from('posts').delete().eq('id', postId)
+      setMyPosts((prev) => prev.filter((p) => p.id !== postId))
+      toast.success('Post deleted.')
+    })
   }
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,7 +214,7 @@ export default function Profile({
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
       setEditAvatar(data.publicUrl)
     } catch (error: any) {
-      alert(error.message)
+      toast.error(error.message)
     } finally {
       setUploadingAvatar(false)
     }
@@ -213,6 +228,7 @@ export default function Profile({
       await supabase.from('profiles').update(updates).eq('id', user.id)
       setProfile({ ...profile, ...updates })
       setIsEditing(false)
+      toast.success('Profile saved!')
     }
   }
 
@@ -221,6 +237,11 @@ export default function Profile({
     if (!listName.trim() || !isCurrentUser) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    if (!profile?.is_premium && lists.length >= FREE_LIST_LIMIT) {
+      toast.error(`Free plan is limited to ${FREE_LIST_LIMIT} custom lists. Upgrade to Premium for unlimited lists.`)
+      return
+    }
 
     const { data } = await supabase.from('lists').insert([{ user_id: user.id, name: listName.trim(), description: listDesc.trim(), is_public: true }]).select().single()
     if (data) {
@@ -231,11 +252,47 @@ export default function Profile({
     }
   }
 
-  const handleDeleteList = async (id: string) => {
-    if (!window.confirm('Delete this list?')) return
-    await supabase.from('lists').delete().eq('id', id)
-    if (profile?.id) fetchUserLists(profile.id)
-    if (expandedListId === id) setExpandedListId(null)
+  const handleSelectAccentColor = async (color: string) => {
+    if (!isCurrentUser || !profile) return
+    await supabase.from('profiles').update({ accent_color: color }).eq('id', profile.id)
+    setProfile({ ...profile, accent_color: color })
+  }
+
+  const handleUpgradeClick = async () => {
+    const { data, error } = await supabase.functions.invoke('create-checkout-session')
+    if (error || !data?.url) {
+      toast.error('Could not start checkout. Please try again.')
+      return
+    }
+    window.location.href = data.url
+  }
+
+  const handleImportSteam = async (steamId: string) => {
+    const { data, error } = await supabase.functions.invoke('import-steam', { body: { steamId } })
+    if (error) {
+      toast.error('Steam import failed. Check the Steam ID/profile URL and try again.')
+      return
+    }
+    if (data?.error) {
+      toast.error(data.error)
+      return
+    }
+    toast.success(
+      data.message ?? `Imported ${data.imported} game${data.imported === 1 ? '' : 's'} from Steam${data.skipped ? ` (${data.skipped} already tracked or unmatched)` : ''}.`
+    )
+    if (profile?.id) {
+      loadProfile()
+      invalidateUserGames(profile.id)
+    }
+  }
+
+  const handleDeleteList = (id: string) => {
+    confirmToast('Delete this list?', async () => {
+      await supabase.from('lists').delete().eq('id', id)
+      if (profile?.id) fetchUserLists(profile.id)
+      if (expandedListId === id) setExpandedListId(null)
+      toast.success('List deleted.')
+    })
   }
 
   const toggleListExpansion = async (listId: string) => {
@@ -290,7 +347,34 @@ export default function Profile({
     ].filter((d) => d.value > 0)
     const maxPlatform = platformData.length > 0 ? Math.max(...platformData.map((p) => p.count)) : 1
 
-    return { total, completed, backlog, playing, dropped, percent100, averageRating, favorites, platformData, statusData, maxPlatform }
+    const ratingBuckets = [0, 0, 0, 0, 0]
+    userLibrary.forEach((g) => {
+      if (g.rating && g.rating > 0) {
+        const bucket = Math.min(5, Math.max(1, Math.round(g.rating))) - 1
+        ratingBuckets[bucket]++
+      }
+    })
+    const ratingDistribution = ratingBuckets.map((count, i) => ({ stars: i + 1, count }))
+    const maxRatingBucket = Math.max(...ratingBuckets, 1)
+
+    const now = new Date()
+    const monthlyActivity = Array.from({ length: 6 }).map((_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+      const label = d.toLocaleDateString('en-US', { month: 'short' })
+      const count = userLibrary.filter((g) => {
+        if (g.status !== 'completed' && g.status !== '100_percent') return false
+        if (!g.completed_at) return false
+        const cd = new Date(g.completed_at)
+        return cd.getFullYear() === d.getFullYear() && cd.getMonth() === d.getMonth()
+      }).length
+      return { label, count }
+    })
+    const maxMonthly = Math.max(...monthlyActivity.map((m) => m.count), 1)
+
+    return {
+      total, completed, backlog, playing, dropped, percent100, averageRating, favorites,
+      platformData, statusData, maxPlatform, ratingDistribution, maxRatingBucket, monthlyActivity, maxMonthly,
+    }
   }, [userLibrary])
 
   const filteredAndSortedLibrary = useMemo(() => {
@@ -356,6 +440,9 @@ export default function Profile({
           editIsPublic={editIsPublic} setEditIsPublic={setEditIsPublic}
           uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload}
           saveProfile={saveProfile} onCancel={() => setIsEditing(false)}
+          isPremium={!!profile?.is_premium} accentColor={profile?.accent_color ?? null}
+          onSelectAccentColor={handleSelectAccentColor}
+          onImportSteam={handleImportSteam}
         />
       )}
 
@@ -399,6 +486,15 @@ export default function Profile({
               <button onClick={() => setViewMode('activity')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'activity' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Feed Activity</button>
               <button onClick={() => setViewMode('library')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'library' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Game Collection</button>
               <button onClick={() => setViewMode('lists')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'lists' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Custom Lists ({lists.length})</button>
+              {isCurrentUser && profile?.is_premium && (
+                <button onClick={() => setViewMode('insights')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'insights' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Insights</button>
+              )}
+              {isCurrentUser && !profile?.is_premium && (
+                <button onClick={() => setViewMode('premium')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors flex items-center gap-1.5 ${viewMode === 'premium' ? 'text-amber-500 border-b-2 border-amber-500' : 'text-amber-600/80 dark:text-amber-400/80 hover:text-amber-500'}`}>
+                  <Crown className="w-3.5 h-3.5" />
+                  Premium
+                </button>
+              )}
             </div>
 
             {/* ===== ABAS CONTEÚDO ===== */}
@@ -420,6 +516,18 @@ export default function Profile({
                 filterStatus={filterStatus} setFilterStatus={setFilterStatus}
                 sortOrder={sortOrder} setSortOrder={setSortOrder} handleGameClick={handleGameClick}
               />
+            )}
+
+            {viewMode === 'insights' && isCurrentUser && profile?.is_premium && (
+              <ProfileInsights
+                statusData={libStats.statusData} platformData={libStats.platformData} maxPlatform={libStats.maxPlatform}
+                ratingDistribution={libStats.ratingDistribution} maxRatingBucket={libStats.maxRatingBucket}
+                monthlyActivity={libStats.monthlyActivity} maxMonthly={libStats.maxMonthly} totalTracked={libStats.total}
+              />
+            )}
+
+            {viewMode === 'premium' && isCurrentUser && !profile?.is_premium && (
+              <PremiumTab onUpgradeClick={handleUpgradeClick} />
             )}
           </div>
         </>

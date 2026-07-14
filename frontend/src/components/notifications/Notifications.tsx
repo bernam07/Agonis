@@ -15,30 +15,57 @@
 */
 
 import { useState, useEffect, useRef } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { Bell } from 'lucide-react'
+import { useCurrentUserId } from '../../hooks/useCurrentUserId'
+
+async function fetchNotifications(userId: string) {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select(
+      `
+      id, type, is_read, created_at,
+      profiles!notifications_actor_id_fkey (id, username, avatar_url)
+    `
+    )
+    .eq('receiver_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (error) throw error
+  return (data as any[]) ?? []
+}
 
 export default function Notifications({ onUserClick }: { onUserClick: (id: string) => void }) {
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
-
   const menuRef = useRef<HTMLDivElement>(null)
+  const queryClient = useQueryClient()
+  const { data: userId } = useCurrentUserId()
+  const notificationsQueryKey = ['notifications', userId] as const
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: notificationsQueryKey,
+    queryFn: () => fetchNotifications(userId as string),
+    enabled: !!userId,
+  })
+
+  const unreadCount = notifications.filter((n: any) => !n.is_read).length
 
   useEffect(() => {
-    fetchNotifications()
+    if (!userId) return
 
     const channel = supabase
       .channel('realtime-notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
-        fetchNotifications()
+        queryClient.invalidateQueries({ queryKey: notificationsQueryKey })
       })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [userId])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -54,76 +81,30 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
     }
   }, [])
 
-  const handleAcceptRequest = async (notif: any) => {
-    if (!notif.profiles) return
-
-    await supabase
-      .from('follows')
-      .insert([{ follower_id: notif.profiles.id, following_id: notif.receiver_id }])
-    await supabase
-      .from('follow_requests')
-      .delete()
-      .match({ sender_id: notif.profiles.id, receiver_id: notif.receiver_id })
-    await supabase
-      .from('notifications')
-      .update({ type: 'follow', is_read: true })
-      .eq('id', notif.id)
-    await supabase
-      .from('notifications')
-      .insert([
+  const acceptRequestMutation = useMutation({
+    mutationFn: async (notif: any) => {
+      await supabase.from('follows').insert([{ follower_id: notif.profiles.id, following_id: notif.receiver_id }])
+      await supabase.from('follow_requests').delete().match({ sender_id: notif.profiles.id, receiver_id: notif.receiver_id })
+      await supabase.from('notifications').update({ type: 'follow', is_read: true }).eq('id', notif.id)
+      await supabase.from('notifications').insert([
         { receiver_id: notif.profiles.id, actor_id: notif.receiver_id, type: 'follow_accepted' },
       ])
-    fetchNotifications()
-  }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationsQueryKey }),
+  })
 
-  const handleRejectRequest = async (notif: any) => {
-    if (!notif.profiles) return
-
-    await supabase
-      .from('follow_requests')
-      .delete()
-      .match({ sender_id: notif.profiles.id, receiver_id: notif.receiver_id })
-    await supabase.from('notifications').delete().eq('id', notif.id)
-    fetchNotifications()
-  }
-
-  const fetchNotifications = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data } = await supabase
-      .from('notifications')
-      .select(
-        `
-        id, type, is_read, created_at,
-        profiles!notifications_actor_id_fkey (id, username, avatar_url)
-      `
-      )
-      .eq('receiver_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    if (data) {
-      setNotifications(data)
-      setUnreadCount(data.filter((n:any) => !n.is_read).length)
-    }
-  }
+  const rejectRequestMutation = useMutation({
+    mutationFn: async (notif: any) => {
+      await supabase.from('follow_requests').delete().match({ sender_id: notif.profiles.id, receiver_id: notif.receiver_id })
+      await supabase.from('notifications').delete().eq('id', notif.id)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationsQueryKey }),
+  })
 
   const markAsRead = async () => {
-    if (unreadCount === 0) return
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (user) {
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-      setUnreadCount(0)
-    }
+    if (unreadCount === 0 || !userId) return
+    queryClient.setQueryData(notificationsQueryKey, (old: any[] = []) => old.map((n) => ({ ...n, is_read: true })))
+    await supabase.from('notifications').update({ is_read: true }).eq('receiver_id', userId).eq('is_read', false)
   }
 
   const toggleDropdown = () => {
@@ -134,21 +115,15 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
 
   const clearAllNotifications = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
+    if (!userId) return
 
-    setNotifications([])
-    setUnreadCount(0)
-
-    await supabase.from('notifications').delete().eq('receiver_id', user.id)
+    queryClient.setQueryData(notificationsQueryKey, [])
+    await supabase.from('notifications').delete().eq('receiver_id', userId)
   }
 
   const clearSingleNotification = async (e: React.MouseEvent, notifId: string) => {
     e.stopPropagation()
-    setNotifications((prev) => prev.filter((n) => n.id !== notifId))
-
+    queryClient.setQueryData(notificationsQueryKey, (old: any[] = []) => old.filter((n) => n.id !== notifId))
     await supabase.from('notifications').delete().eq('id', notifId)
   }
 
@@ -223,7 +198,7 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleAcceptRequest(notif)
+                            acceptRequestMutation.mutate(notif)
                           }}
                           className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-3 py-1 rounded-md transition-colors"
                         >
@@ -232,7 +207,7 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleRejectRequest(notif)
+                            rejectRequestMutation.mutate(notif)
                           }}
                           className="bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-[10px] font-bold px-3 py-1 rounded-md transition-colors"
                         >

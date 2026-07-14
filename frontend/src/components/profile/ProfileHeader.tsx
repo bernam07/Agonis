@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+import { Crown } from 'lucide-react'
+
 interface ProfileHeaderProps {
   profile: any;
   isCurrentUser: boolean;
@@ -50,7 +52,10 @@ export default function ProfileHeader({
         </div>
       )}
 
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative overflow-hidden">
+        {profile.is_premium && profile.accent_color && (
+          <div className="absolute top-0 left-0 w-full h-1.5" style={{ backgroundColor: profile.accent_color }} />
+        )}
         <div className="w-32 h-32 rounded-full bg-zinc-200 dark:bg-zinc-800 border-4 border-zinc-50 dark:border-zinc-950 flex items-center justify-center text-5xl font-black text-zinc-500 overflow-hidden shrink-0 shadow-xl">
           {profile.avatar_url ? (
             <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
@@ -61,7 +66,13 @@ export default function ProfileHeader({
 
         <div className="flex-1 w-full text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start mb-2">
-            <h2 className="text-3xl font-black text-zinc-900 dark:text-white">@{profile.username}</h2>
+            <h2
+              className="text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2"
+              style={profile.is_premium && profile.accent_color ? { color: profile.accent_color } : undefined}
+            >
+              @{profile.username}
+              {profile.is_premium && <Crown className="w-5 h-5 text-amber-500 shrink-0" aria-label="Premium member" />}
+            </h2>
             {isCurrentUser ? (
               <button onClick={() => setIsEditing(true)} className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 rounded-lg transition-colors">
                 Settings

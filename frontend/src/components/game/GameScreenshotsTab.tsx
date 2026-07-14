@@ -17,10 +17,11 @@
 interface GameScreenshotsTabProps {
   screenshots: any[];
   uploadingScreenshot: boolean;
+  isLoading?: boolean;
   handleScreenshotUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export default function GameScreenshotsTab({ screenshots, uploadingScreenshot, handleScreenshotUpload }: GameScreenshotsTabProps) {
+export default function GameScreenshotsTab({ screenshots, uploadingScreenshot, isLoading, handleScreenshotUpload }: GameScreenshotsTabProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
@@ -31,7 +32,9 @@ export default function GameScreenshotsTab({ screenshots, uploadingScreenshot, h
         </label>
       </div>
 
-      {screenshots.length === 0 ? (
+      {isLoading ? (
+        <div className="text-zinc-500 text-xs font-bold text-center py-8 animate-pulse">Loading screenshots...</div>
+      ) : screenshots.length === 0 ? (
         <div className="text-center py-12 text-zinc-500 dark:text-zinc-600 font-medium text-sm border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50 dark:bg-zinc-950/50">
           No screenshots yet. <br /> Upload one or attach an image to a feed post!
         </div>

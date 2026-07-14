@@ -15,6 +15,7 @@
 */
 
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { supabase } from './lib/supabase'
 import GameSearch from './components/game/GameSearch'
 import Auth from './components/auth/Auth'
@@ -30,6 +31,8 @@ import { AnimatePresence } from 'framer-motion'
 import PageTransition from './components/common/PageTransition'
 import { Sun, Moon} from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useUserGames } from './hooks/useUserGames'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -37,7 +40,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<
     'feed' | 'search' | 'library' | 'profile' | 'policy' | 'faq'
   >('feed')
-  const [globalLibrary, setGlobalLibrary] = useState<any[]>([])
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -45,50 +47,21 @@ export default function App() {
   })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const refreshLibrary = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase.from('user_games').select('*').eq('user_id', user.id)
-
-    if (error) {
-      console.error('Erro a carregar biblioteca:', error)
-      return
-    }
-
-    if (data) {
-      if (data.length === 0) {
-        setGlobalLibrary([])
-        return
-      }
-
-      const gameIds = [...new Set(data.map((item: any) => item.igdb_id).filter(Boolean))]
-      const { data: igdbGames, error: igdbError } = await supabase.functions.invoke('fetch-games', {
-        body: { gameIds },
-      })
-
-      if (igdbError) {
-        console.error('Erro a carregar metadados da IGDB:', igdbError)
-        setGlobalLibrary(data)
-        return
-      }
-
-      const formattedLibrary = data.map((item: any) => ({
-        ...item,
-        ...(igdbGames?.find((g: any) => g.id === item.igdb_id) ?? {}),
-      }))
-
-      setGlobalLibrary(
-        formattedLibrary.sort((a:any, b:any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      )
-    }
-  }
+  const queryClient = useQueryClient()
+  const userId = session?.user?.id ?? null
+  const { data: globalLibrary = [] } = useUserGames(userId)
 
   useEffect(() => {
-    if (session) refreshLibrary()
-  }, [session])
+    const params = new URLSearchParams(window.location.search)
+    const upgraded = params.get('upgraded')
+    if (upgraded === 'true') {
+      toast.success('Payment successful! Your Premium features are activating and should appear within a few seconds.')
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (upgraded === 'cancelled') {
+      toast.info('Checkout cancelled — no charge was made.')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -107,7 +80,7 @@ export default function App() {
       if (session) {
         setShowAuth(false)
       } else {
-        setGlobalLibrary([])
+        queryClient.clear()
         setActiveTab('feed')
         setViewedUserId(null)
       }
@@ -242,7 +215,6 @@ export default function App() {
               <Feed
                 library={globalLibrary}
                 onUserClick={goToProfile}
-                onRefreshLibrary={refreshLibrary}
               />
             </PageTransition>
           )}
@@ -251,13 +223,12 @@ export default function App() {
               <GameSearch
                 onUserClick={goToProfile}
                 library={globalLibrary}
-                onRefreshLibrary={refreshLibrary}
               />
             </PageTransition>
           )}
           {activeTab === 'library' && (
             <PageTransition keyProp="library">
-              <MyLibrary library={globalLibrary} setLibrary={setGlobalLibrary} />
+              <MyLibrary userId={userId} />
             </PageTransition>
           )}
           {activeTab === 'profile' && (

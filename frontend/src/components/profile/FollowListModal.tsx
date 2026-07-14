@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+import { createPortal } from 'react-dom'
+
 interface FollowListModalProps {
   data: { title: string; users: any[] };
   onClose: () => void;
@@ -21,7 +23,7 @@ interface FollowListModalProps {
 }
 
 export default function FollowListModal({ data, onClose, onUserClick }: FollowListModalProps) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50">
@@ -43,6 +45,7 @@ export default function FollowListModal({ data, onClose, onUserClick }: FollowLi
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

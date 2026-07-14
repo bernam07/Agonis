@@ -12,7 +12,7 @@ vi.mock('html-to-image', () => ({
 }))
 
 describe('SharePostModal', () => {
-  it('renders a post card and actions', () => {
+  it('renders a post card and actions', async () => {
     const post = {
       content: 'A short post',
       image_url: '',
@@ -24,13 +24,13 @@ describe('SharePostModal', () => {
       },
     }
 
-    const { container, cleanup } = renderIntoDocument(
+    const { cleanup } = renderIntoDocument(
       <SharePostModal post={post} onClose={() => {}} />,
     )
 
-    expect(container.textContent).toContain('A short post')
-    expect(container.textContent).toContain('Download Story')
-    expect(container.textContent).toContain('@bernam07')
+    expect(document.body.textContent).toContain('A short post')
+    expect(document.body.textContent).toContain('Download Story')
+    expect(document.body.textContent).toContain('@bernam07')
 
     const originalCreateElement = document.createElement.bind(document)
     const createElementSpy = vi.spyOn(document, 'createElement')
@@ -47,12 +47,14 @@ describe('SharePostModal', () => {
       return originalCreateElement(tagName)
     })
 
-    const buttons = container.querySelectorAll('button')
-    act(() => {
+    const buttons = document.body.querySelectorAll('button')
+    await act(async () => {
       buttons[1].dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
     })
 
     expect(toPngMock).toHaveBeenCalled()
+    expect(clickSpy).toHaveBeenCalled()
 
     cleanup()
     createElementSpy.mockRestore()

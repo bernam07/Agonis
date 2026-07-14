@@ -12,8 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { searchQuery } = await req.json()
-    
+    const { searchQuery, offset = 0, limit = 20 } = await req.json()
+    const pageLimit = Math.min(Number(limit) || 20, 50)
+    const pageOffset = Math.max(Number(offset) || 0, 0)
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -23,9 +25,9 @@ serve(async (req) => {
       .from('games_cache')
       .select('*')
       .ilike('name', `%${searchQuery}%`)
-      .limit(50)
+      .range(pageOffset, pageOffset + pageLimit - 1)
 
-    if (cachedGames && cachedGames.length >= 5) {
+    if (cachedGames && cachedGames.length === pageLimit) {
       return new Response(JSON.stringify(cachedGames), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -49,7 +51,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'text/plain',
       },
-      body: `search "${searchQuery}"; fields name, cover.url, summary, platforms.name; limit 50;`
+      body: `search "${searchQuery}"; fields name, cover.url, summary, platforms.name; where category = 0 & version_parent = null & status != (6,7); limit ${pageLimit}; offset ${pageOffset};`
     })
 
     const igdbData = await igdbResponse.json()

@@ -1,11 +1,17 @@
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-const { toPngMock, supabaseMock } = vi.hoisted(() => {
-  const toPngMock = vi.fn().mockResolvedValue('data:image/png;base64,stub')
+const { html2canvasMock, supabaseMock } = vi.hoisted(() => {
+  const html2canvasMock = vi.fn().mockResolvedValue({
+    toDataURL: () => 'data:image/jpeg;base64,stub',
+  })
   const profilesSingleMock = vi.fn().mockResolvedValue({ data: { username: 'bernam07' }, error: null })
+  const getUserMock = vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } })
 
   const supabaseMock = {
+    auth: {
+      getUser: getUserMock,
+    },
     from: vi.fn(() => ({
       select: () => ({
         eq: () => ({
@@ -15,15 +21,15 @@ const { toPngMock, supabaseMock } = vi.hoisted(() => {
     })),
   }
 
-  return { toPngMock, supabaseMock }
+  return { html2canvasMock, supabaseMock }
 })
 
 vi.mock('../../lib/supabase', () => ({
   supabase: supabaseMock,
 }))
 
-vi.mock('html-to-image', () => ({
-  toPng: toPngMock,
+vi.mock('html2canvas', () => ({
+  default: html2canvasMock,
 }))
 
 import ShareModal from '../../components/game/ShareModal'
@@ -62,7 +68,7 @@ describe('ShareModal', () => {
       return originalCreateElement(tagName)
     })
 
-    const { container, cleanup } = renderIntoDocument(
+    const { cleanup } = renderIntoDocument(
       <ShareModal game={game} userGame={userGame} onClose={onClose} />,
     )
 
@@ -70,13 +76,13 @@ describe('ShareModal', () => {
       await Promise.resolve()
     })
 
-    expect(container.textContent).toContain('Download Card')
-    expect(container.textContent).toContain('Halo')
-    expect(container.textContent).toContain('Great game.')
-    expect(container.textContent).toContain('@bernam07')
+    expect(document.body.textContent).toContain('Save to Device')
+    expect(document.body.textContent).toContain('Halo')
+    expect(document.body.textContent).toContain('Great game.')
+    expect(document.body.textContent).toContain('@bernam07')
 
-    const downloadButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Download Card'),
+    const downloadButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Save to Device'),
     )
 
     await act(async () => {
@@ -84,12 +90,10 @@ describe('ShareModal', () => {
       await Promise.resolve()
     })
 
-    expect(toPngMock).toHaveBeenCalled()
+    expect(html2canvasMock).toHaveBeenCalled()
     expect(clickSpy).toHaveBeenCalled()
 
-    const closeButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Cancel'),
-    )
+    const closeButton = document.body.querySelector('button[aria-label="Close"]') as HTMLButtonElement
 
     await act(async () => {
       closeButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))

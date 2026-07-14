@@ -15,98 +15,90 @@
 */
 
 import { useState, useEffect } from 'react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import GameModal from './GameModal'
 import { GameSkeleton } from '../common/Skeletons'
+import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger'
+import { dedupeGamesByTitle } from '../../lib/gameTitle'
 
-export default function GameSearch({ 
-  onUserClick, 
-  library, 
-  onRefreshLibrary 
-}: { 
+const GAMES_PER_PAGE = 20
+const TRENDING_QUERY = 'The Last of Us'
+
+export default function GameSearch({
+  onUserClick,
+  library,
+}: {
   onUserClick?: (id: string) => void
   library: any[]
-  onRefreshLibrary: () => void
 }) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<any[]>([])
-  const [userResults, setUserResults] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [activeQuery, setActiveQuery] = useState<string | null>(null)
   const [selectedGame, setSelectedGame] = useState<any>(null)
-
   const [searchMode, setSearchMode] = useState<'games' | 'users'>('games')
 
-  const loadRecommendations = async () => {
-    setLoading(true)
-    const { data, error } = await supabase.functions.invoke('search-igdb', {
-      body: { searchQuery: 'The Last of Us' },
-    })
-    if (!error && data) setResults(data)
-    setLoading(false)
-  }
+  const {
+    data: gamesData,
+    isLoading: loadingGames,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['game-search', activeQuery ?? TRENDING_QUERY],
+    queryFn: async ({ pageParam }) => {
+      const { data, error } = await supabase.functions.invoke('search-igdb', {
+        body: { searchQuery: activeQuery ?? TRENDING_QUERY, offset: pageParam, limit: GAMES_PER_PAGE },
+      })
+      if (error) throw error
+      return Array.isArray(data) ? data : []
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === GAMES_PER_PAGE ? allPages.length * GAMES_PER_PAGE : undefined,
+    enabled: searchMode === 'games',
+  })
 
-  useEffect(() => {
-    loadRecommendations()
-  }, [])
+  const gamesSentinelRef = useInfiniteScrollTrigger(
+    () => fetchNextPage(),
+    searchMode === 'games' && !!hasNextPage && !isFetchingNextPage,
+  )
 
+  const results = dedupeGamesByTitle(
+    (gamesData?.pages.flat() ?? []).filter(
+      (game: any, index: number, self: any[]) => index === self.findIndex((t) => t.id === game.id),
+    ),
+  )
+
+  const [debouncedUserQuery, setDebouncedUserQuery] = useState('')
   useEffect(() => {
-    if (searchMode === 'users') {
-      const delayDebounceFn = setTimeout(() => {
-        searchUsers()
-      }, 300)
-      return () => clearTimeout(delayDebounceFn)
-    }
+    if (searchMode !== 'users') return
+    const delayDebounceFn = setTimeout(() => setDebouncedUserQuery(query), 300)
+    return () => clearTimeout(delayDebounceFn)
   }, [query, searchMode])
 
-  const searchUsers = async () => {
-    if (!query.trim()) {
-      setUserResults([])
-      return
-    }
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, username, avatar_url, bio')
-      .ilike('username', `%${query}%`)
-      .limit(20)
+  const { data: userResults = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ['user-search', debouncedUserQuery],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, bio')
+        .ilike('username', `%${debouncedUserQuery}%`)
+        .limit(20)
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: searchMode === 'users' && !!debouncedUserQuery.trim(),
+  })
 
-    if (!error && data) setUserResults(data)
-    else setUserResults([])
-    setLoading(false)
-  }
+  const loading = searchMode === 'games' ? loadingGames : loadingUsers
 
-  const handleSearch = async (e?: React.FormEvent) => {
+  const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-
     if (searchMode === 'users') {
-      searchUsers()
+      setDebouncedUserQuery(query)
       return
     }
-
-    if (!query.trim()) return loadRecommendations()
-    setLoading(true)
-
-    const { data, error } = await supabase.functions.invoke('search-igdb', {
-      body: { searchQuery: query },
-    })
-
-    if (error) {
-      console.error(error)
-      setResults([])
-      setLoading(false)
-      return
-    }
-
-    if (Array.isArray(data)) {
-      const uniqueGames = data.filter((game: any, index: number, self: any[]) =>
-        index === self.findIndex((t) => t.id === game.id)
-      );
-      setResults(uniqueGames)
-    } else {
-      console.error('Erro da API:', data)
-      setResults([])
-    }
-    setLoading(false)
+    setActiveQuery(query.trim() || null)
   }
 
   return (
@@ -116,7 +108,6 @@ export default function GameSearch({
           onClick={() => {
             setSearchMode('games')
             setQuery('')
-            if (results.length === 0) loadRecommendations()
           }}
           className={`pb-2 text-sm font-bold transition-colors ${
             searchMode === 'games'
@@ -130,7 +121,7 @@ export default function GameSearch({
           onClick={() => {
             setSearchMode('users')
             setQuery('')
-            setUserResults([])
+            setDebouncedUserQuery('')
           }}
           className={`pb-2 text-sm font-bold transition-colors ${
             searchMode === 'users'
@@ -165,45 +156,55 @@ export default function GameSearch({
       <div className="mb-4 px-1">
         <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
           {searchMode === 'games'
-            ? query
+            ? activeQuery
               ? 'Search Results'
               : 'Trending & Recommendations'
-            : query
+            : debouncedUserQuery
               ? 'Matching Users'
               : 'Discover Community'}
         </h2>
       </div>
 
       {searchMode === 'games' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {loading && Array.from({ length: 10 }).map((_, i) => <GameSkeleton key={i} />)}
-          
-          {!loading && Array.isArray(results) &&
-            results.map((game) => (
-              <div
-                key={game.id}
-                onClick={() => setSelectedGame(game)}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-indigo-500 transition-all flex flex-col"
-              >
-                <div className="aspect-3/4 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-950 mb-3 border border-zinc-200/50 dark:border-zinc-800/50">
-                  {game.cover?.url ? (
-                    <img
-                      src={game.cover.url.replace('t_thumb', 't_cover_big')}
-                      alt={game.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 text-xs font-semibold">
-                      No Artwork
-                    </div>
-                  )}
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {loadingGames && Array.from({ length: 10 }).map((_, i) => <GameSkeleton key={i} />)}
+
+            {!loadingGames &&
+              results.map((game) => (
+                <div
+                  key={game.id}
+                  onClick={() => setSelectedGame(game)}
+                  className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 cursor-pointer group hover:border-indigo-500 transition-all flex flex-col"
+                >
+                  <div className="aspect-3/4 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-950 mb-3 border border-zinc-200/50 dark:border-zinc-800/50">
+                    {game.cover?.url ? (
+                      <img
+                        src={game.cover.url.replace('t_thumb', 't_cover_big')}
+                        alt={game.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 text-xs font-semibold">
+                        No Artwork
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200 line-clamp-2 text-center px-1 mt-auto group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                    {game.name}
+                  </h3>
                 </div>
-                <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200 line-clamp-2 text-center px-1 mt-auto group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
-                  {game.name}
-                </h3>
-              </div>
-            ))}
-        </div>
+              ))}
+          </div>
+
+          {!loadingGames && results.length > 0 && (
+            <div ref={gamesSentinelRef} className="flex justify-center mt-6 mb-2 h-8">
+              {isFetchingNextPage && (
+                <span className="text-zinc-500 text-sm font-bold animate-pulse">Loading more...</span>
+              )}
+            </div>
+          )}
+        </>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {userResults.map((user) => (
@@ -230,12 +231,12 @@ export default function GameSearch({
             </div>
           ))}
 
-          {userResults.length === 0 && query && !loading && (
+          {userResults.length === 0 && debouncedUserQuery && !loadingUsers && (
             <div className="col-span-full text-center py-10 text-zinc-500 text-sm font-medium bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
-              No users found matching "{query}"
+              No users found matching "{debouncedUserQuery}"
             </div>
           )}
-          {userResults.length === 0 && !query && (
+          {!debouncedUserQuery && (
             <div className="col-span-full text-center py-10 text-zinc-500 text-sm font-medium bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
               Type a username to start searching...
             </div>
@@ -248,7 +249,6 @@ export default function GameSearch({
           game={selectedGame}
           userGame={library.find((g) => (g.igdb_id || g.id) === selectedGame.id)}
           onClose={() => setSelectedGame(null)}
-          onRefresh={onRefreshLibrary}
         />
       )}
     </div>

@@ -23,6 +23,14 @@ export function GameSkeleton() {
   )
 }
 
+export function LibraryGridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      {Array.from({ length: 10 }).map((_, i) => <GameSkeleton key={i} />)}
+    </div>
+  )
+}
+
 export function PostSkeleton() {
   return (
     <div className="bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-3xl p-6 animate-pulse">

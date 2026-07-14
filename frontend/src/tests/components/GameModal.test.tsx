@@ -121,7 +121,7 @@ vi.mock('../../components/game/ShareModal', () => ({
 }))
 
 import GameModal from '../../components/game/GameModal'
-import { renderIntoDocument } from '../testUtils'
+import { renderIntoDocument, waitFor } from '../testUtils'
 
 const game = {
   id: 1,
@@ -133,6 +133,7 @@ const game = {
 } as any
 
 const userGame = {
+  id: 'user-game-1',
   igdb_id: 1,
   status: 'playing',
   rating: 4,
@@ -150,7 +151,7 @@ describe('GameModal', () => {
   it('renders details and saves changes', async () => {
     const onClose = vi.fn()
     const onRefresh = vi.fn()
-    const { container, cleanup } = renderIntoDocument(
+    const { cleanup } = renderIntoDocument(
       <GameModal game={game} userGame={userGame} onClose={onClose} onRefresh={onRefresh} />,
     )
 
@@ -158,14 +159,14 @@ describe('GameModal', () => {
       await Promise.resolve()
     })
 
-    expect(container.textContent).toContain('Halo')
-    expect(container.textContent).toContain('Track Status')
-    expect(container.textContent).toContain('Game Details')
-    expect(container.textContent).toContain('Screenshots')
-    expect(container.textContent).toContain('Community')
-    expect(container.textContent).toContain('Save Changes')
+    expect(document.body.textContent).toContain('Halo')
+    expect(document.body.textContent).toContain('Track Status')
+    expect(document.body.textContent).toContain('Game Details')
+    expect(document.body.textContent).toContain('Screenshots')
+    expect(document.body.textContent).toContain('Community')
+    expect(document.body.textContent).toContain('Save Changes')
 
-    const buttons = Array.from(container.querySelectorAll('button'))
+    const buttons = Array.from(document.body.querySelectorAll('button'))
     const saveButton = buttons.find((button) => button.textContent?.includes('Save Changes'))
     expect(saveButton).toBeTruthy()
 
@@ -185,7 +186,7 @@ describe('GameModal', () => {
   it('removes the game from the library', async () => {
     const onClose = vi.fn()
     const onRefresh = vi.fn()
-    const { container, cleanup } = renderIntoDocument(
+    const { cleanup } = renderIntoDocument(
       <GameModal game={game} userGame={userGame} onClose={onClose} onRefresh={onRefresh} />,
     )
 
@@ -193,8 +194,8 @@ describe('GameModal', () => {
       await Promise.resolve()
     })
 
-    const removeButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Remove from Library'),
+    const removeButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.trim() === 'Remove',
     )
 
     expect(removeButton).toBeTruthy()
@@ -214,15 +215,15 @@ describe('GameModal', () => {
   it('adds the game to a custom list and opens the share modal', async () => {
     const onClose = vi.fn()
     const onRefresh = vi.fn()
-    const { container, cleanup } = renderIntoDocument(
+    const { cleanup } = renderIntoDocument(
       <GameModal game={game} userGame={userGame} onClose={onClose} onRefresh={onRefresh} />,
     )
 
-    await act(async () => {
-      await Promise.resolve()
+    await waitFor(() => {
+      expect(document.body.querySelector('select')).toBeTruthy()
     })
 
-    const select = container.querySelector('select') as HTMLSelectElement
+    const select = document.body.querySelector('select') as HTMLSelectElement
     await act(async () => {
       Object.defineProperty(select, 'value', {
         value: 'list-1',
@@ -232,7 +233,7 @@ describe('GameModal', () => {
       await Promise.resolve()
     })
 
-    const addButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const addButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Add'),
     )
 
@@ -243,9 +244,11 @@ describe('GameModal', () => {
       await Promise.resolve()
     })
 
-    expect(listGamesInsertMock).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(listGamesInsertMock).toHaveBeenCalled()
+    })
 
-    const exportButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const exportButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Export Review Card'),
     )
     expect(exportButton).toBeTruthy()
@@ -255,7 +258,7 @@ describe('GameModal', () => {
       await Promise.resolve()
     })
 
-    expect(container.querySelector('[data-testid="share-modal"]')).toBeTruthy()
+    expect(document.body.querySelector('[data-testid="share-modal"]')).toBeTruthy()
 
     cleanup()
   })

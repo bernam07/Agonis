@@ -56,12 +56,11 @@ vi.mock('../../components/game/GameModal', () => ({
 }))
 
 import GameSearch from '../../components/game/GameSearch'
-import { renderIntoDocument } from '../testUtils'
+import { renderIntoDocument, waitFor } from '../testUtils'
 
 describe('GameSearch', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
   })
 
   afterEach(() => {
@@ -71,19 +70,20 @@ describe('GameSearch', () => {
   it('renders game recommendations and searches for users', async () => {
     const onUserClick = vi.fn()
     const { container, cleanup } = renderIntoDocument(
-      <GameSearch library={[]} onUserClick={onUserClick} onRefreshLibrary={() => {}} />,
+      <GameSearch library={[]} onUserClick={onUserClick} />,
     )
 
-    await act(async () => {
-      await Promise.resolve()
-    })
-
     expect(container.textContent).toContain('Trending & Recommendations')
-    expect(container.textContent).toContain('The Last of Us')
+
+    await waitFor(() => {
+      expect(container.textContent).toContain('The Last of Us')
+    })
 
     const buttons = Array.from(container.querySelectorAll('button'))
     const usersButton = buttons.find((button) => button.textContent?.includes('Find Users'))
     expect(usersButton).toBeTruthy()
+
+    vi.useFakeTimers()
 
     await act(async () => {
       usersButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -97,11 +97,12 @@ describe('GameSearch', () => {
         writable: true,
       })
       input.dispatchEvent(new Event('input', { bubbles: true }))
-      vi.advanceTimersByTime(350)
-      await Promise.resolve()
+      await vi.advanceTimersByTimeAsync(350)
     })
 
-    expect(container.textContent).toContain('@sam')
+    await waitFor(() => {
+      expect(container.textContent).toContain('@sam')
+    })
     expect(container.textContent).toContain('Speedrunner')
 
     const userCard = Array.from(container.querySelectorAll('div.cursor-pointer')).find((node) =>

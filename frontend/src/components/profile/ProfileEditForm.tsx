@@ -14,6 +14,9 @@
    limitations under the License.
 */
 
+import { useState } from 'react'
+import { ACCENT_COLORS } from '../../lib/plans'
+
 interface ProfileEditFormProps {
   editUsername: string;
   setEditUsername: (val: string) => void;
@@ -26,13 +29,26 @@ interface ProfileEditFormProps {
   handleAvatarUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   saveProfile: () => void;
   onCancel: () => void;
+  isPremium: boolean;
+  accentColor: string | null;
+  onSelectAccentColor: (color: string) => void;
+  onImportSteam: (steamId: string) => Promise<void>;
 }
 
 export default function ProfileEditForm({
   editUsername, setEditUsername, editBio, setEditBio, editAvatar,
   editIsPublic, setEditIsPublic, uploadingAvatar, handleAvatarUpload,
-  saveProfile, onCancel
+  saveProfile, onCancel, isPremium, accentColor, onSelectAccentColor, onImportSteam
 }: ProfileEditFormProps) {
+  const [steamId, setSteamId] = useState('')
+  const [importingSteam, setImportingSteam] = useState(false)
+
+  const handleImportClick = async () => {
+    if (!steamId.trim() || importingSteam) return
+    setImportingSteam(true)
+    await onImportSteam(steamId.trim())
+    setImportingSteam(false)
+  }
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-md mx-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8">
@@ -58,6 +74,51 @@ export default function ProfileEditForm({
           <div className={`w-4 h-4 bg-white rounded-full transition-transform ${editIsPublic ? 'translate-x-6' : 'translate-x-0'}`} />
         </button>
       </div>
+
+      {isPremium && (
+        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 block mb-2">Accent Color</span>
+          <div className="flex flex-wrap gap-2">
+            {ACCENT_COLORS.map((color) => (
+              <button
+                key={color}
+                type="button"
+                aria-label={`Accent color ${color}`}
+                onClick={() => onSelectAccentColor(color)}
+                className={`w-7 h-7 rounded-full transition-transform ${
+                  accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950 ring-zinc-900 dark:ring-white scale-110' : 'hover:scale-110'
+                }`}
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isPremium && (
+        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 block mb-2">Import from Steam</span>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={steamId}
+              onChange={(e) => setSteamId(e.target.value)}
+              placeholder="Steam ID or profile URL"
+              className="flex-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 text-xs"
+            />
+            <button
+              onClick={handleImportClick}
+              disabled={!steamId.trim() || importingSteam}
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 transition-colors text-white px-4 py-2 rounded-lg font-bold text-xs shrink-0"
+            >
+              {importingSteam ? 'Importing...' : 'Import'}
+            </button>
+          </div>
+          <p className="text-[10px] text-zinc-500 font-medium mt-2">
+            Your Steam profile and game details must be set to public. New games are added to your backlog.
+          </p>
+        </div>
+      )}
       <div className="flex gap-2 mt-2">
         <button onClick={saveProfile} className="flex-1 bg-indigo-600 hover:bg-indigo-500 transition-colors text-white px-4 py-2 rounded-lg font-bold text-sm">Save Changes</button>
         <button onClick={onCancel} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-lg font-bold text-sm">Cancel</button>

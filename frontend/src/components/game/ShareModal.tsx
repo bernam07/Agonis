@@ -15,8 +15,10 @@
 */
 
 import { useRef, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Download, X } from 'lucide-react'
 import html2canvas from 'html2canvas'
+import { toast } from 'sonner'
 import { supabase } from '../../lib/supabase'
 import StarDisplay from '../common/StarDisplay'
 import type { Game, UserGame } from '../../types'
@@ -32,6 +34,7 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
   const [exporting, setExporting] = useState(false)
   const [username, setUsername] = useState<string>('user')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [isPremium, setIsPremium] = useState(false)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -41,12 +44,13 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
       if (user) {
         const { data } = await supabase
           .from('profiles')
-          .select('username, avatar_url')
+          .select('username, avatar_url, is_premium')
           .eq('id', user.id)
           .single()
         if (data) {
           setUsername(data.username)
           setAvatarUrl(data.avatar_url)
+          setIsPremium(!!data.is_premium)
         }
       }
     }
@@ -71,7 +75,7 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
       link.click()
     } catch (error) {
       console.error('Erro ao exportar:', error)
-      alert('Error generating image. Try again.')
+      toast.error('Error generating image. Try again.')
     }
 
     setExporting(false)
@@ -79,9 +83,9 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
 
   const coverUrl = game.cover?.url ? game.cover.url.replace('t_thumb', 't_cover_big') : null
 
-  return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 sm:p-6 bg-zinc-950/98 backdrop-blur-xl">
-      <div className="w-full max-w-[320px] sm:max-w-340px flex flex-col items-center">
+  return createPortal(
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 sm:p-6 py-8 bg-zinc-950/98 backdrop-blur-xl overflow-y-auto">
+      <div className="w-full max-w-[320px] sm:max-w-340px flex flex-col items-center m-auto">
         
         <div
           ref={cardRef}
@@ -151,15 +155,18 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
               </div>
             </div>
 
-            <div className="text-right">
-              <p className="text-xs font-black text-indigo-400">agonis.xyz</p>
-            </div>
+            {!isPremium && (
+              <div className="text-right">
+                <p className="text-xs font-black text-indigo-400">agonis.xyz</p>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="flex w-full gap-3 mt-6">
           <button
             onClick={onClose}
+            aria-label="Close"
             className="w-14 h-14 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors shadow-lg shrink-0"
           >
             <X className="w-6 h-6" />
@@ -180,6 +187,7 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

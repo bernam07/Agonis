@@ -14,66 +14,25 @@
    limitations under the License.
 */
 
-import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { useState } from 'react'
 import GameModal from '../game/GameModal'
 import StarDisplay from '../common/StarDisplay'
+import { LibraryGridSkeleton } from '../common/Skeletons'
 import type { CombinedGame} from '../../types'
+import { useUserGames } from '../../hooks/useUserGames'
 
 interface MyLibraryProps {
-  library: CombinedGame[];
-  setLibrary: (lib: CombinedGame[]) => void;
+  userId: string | null;
 }
 
-export default function MyLibrary({ library, setLibrary }: MyLibraryProps) {
-  const [loading, setLoading] = useState(true)
+export default function MyLibrary({ userId }: MyLibraryProps) {
+  const { data: library = [], isLoading, refetch } = useUserGames(userId)
   const [selectedGame, setSelectedGame] = useState<CombinedGame | null>(null)
   const [filter, setFilter] = useState<string>('all')
 
-  const fetchMyGames = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    const { data: userGames } = await supabase.from('user_games').select('*').eq('user_id', user.id)
-
-    if (!userGames || userGames.length === 0) {
-      setLibrary([])
-      setLoading(false)
-      return
-    }
-
-    const gameIds = userGames.map((g:any) => g.igdb_id)
-    const { data: igdbGames } = await supabase.functions.invoke('fetch-games', {
-      body: { gameIds },
-    })
-
-    if (igdbGames) {
-      const combined = userGames.map((dbGame:any) => ({
-        ...dbGame,
-        ...igdbGames.find((g: any) => g.id === dbGame.igdb_id),
-      }))
-      setLibrary(
-        combined.sort((a:any, b:any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      )
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    if (library.length === 0) fetchMyGames()
-    else setLoading(false)
-  }, [])
-
   const filteredLibrary = library.filter((game) => filter === 'all' || game.status === filter)
 
-  if (loading)
-    return <div className="text-zinc-500 text-center py-12 font-medium">Loading library...</div>
+  if (isLoading) return <LibraryGridSkeleton />
 
   return (
     <div className="w-full">
@@ -136,7 +95,7 @@ export default function MyLibrary({ library, setLibrary }: MyLibraryProps) {
           game={selectedGame}
           userGame={selectedGame}
           onClose={() => setSelectedGame(null)}
-          onRefresh={fetchMyGames}
+          onRefresh={refetch}
         />
       )}
     </div>

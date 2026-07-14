@@ -445,3 +445,21 @@ entrypoint = "./functions/fetch-hltb/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/fetch-hltb/*.html" ]
+
+[functions.import-steam]
+enabled = true
+verify_jwt = true
+import_map = "./functions/import-steam/deno.json"
+entrypoint = "./functions/import-steam/index.ts"
+
+[functions.create-checkout-session]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-checkout-session/deno.json"
+entrypoint = "./functions/create-checkout-session/index.ts"
+
+[functions.stripe-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-webhook/deno.json"
+entrypoint = "./functions/stripe-webhook/index.ts"

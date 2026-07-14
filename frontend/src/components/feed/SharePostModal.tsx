@@ -15,6 +15,7 @@
 */
 
 import { useRef } from 'react'
+import { createPortal } from 'react-dom'
 import * as htmlToImage from 'html-to-image'
 
 export default function SharePostModal({ post, onClose }: any) {
@@ -30,9 +31,9 @@ export default function SharePostModal({ post, onClose }: any) {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
-      <div className="w-full max-w-sm flex flex-col gap-4">
+  return createPortal(
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 py-8 bg-zinc-950/90 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-sm flex flex-col gap-4 m-auto">
         <div
           ref={cardRef}
           className="bg-zinc-900 border border-zinc-800 rounded-4xl p-6 shadow-2xl relative overflow-hidden"
@@ -51,9 +52,11 @@ export default function SharePostModal({ post, onClose }: any) {
             </div>
             <div>
               <div className="font-black text-white text-base">@{post.profiles.username}</div>
-              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                Agonis Post
-              </div>
+              {!post.profiles?.is_premium && (
+                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                  Agonis Post
+                </div>
+              )}
             </div>
           </div>
 
@@ -95,6 +98,7 @@ export default function SharePostModal({ post, onClose }: any) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -72,7 +72,7 @@ vi.mock('../../lib/supabase', () => ({
 }))
 
 import Notifications from '../../components/notifications/Notifications'
-import { renderIntoDocument } from '../testUtils'
+import { renderIntoDocument, waitFor } from '../testUtils'
 
 describe('Notifications', () => {
   beforeEach(() => {
@@ -83,12 +83,11 @@ describe('Notifications', () => {
     const onUserClick = vi.fn()
     const { container, cleanup } = renderIntoDocument(<Notifications onUserClick={onUserClick} />)
 
-    await act(async () => {
-      await Promise.resolve()
-    })
+    expect(container.querySelector('button svg')).toBeTruthy()
 
-    expect(container.textContent).toContain('🔔')
-    expect(container.textContent).toContain('1')
+    await waitFor(() => {
+      expect(container.textContent).toContain('1')
+    })
 
     const bellButton = container.querySelector('button') as HTMLButtonElement
     await act(async () => {
@@ -96,7 +95,9 @@ describe('Notifications', () => {
       await Promise.resolve()
     })
 
-    expect(updateEqMock).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(updateEqMock).toHaveBeenCalled()
+    })
     expect(container.textContent).toContain('Notifications')
     expect(container.textContent).toContain('@sam')
 
@@ -109,8 +110,10 @@ describe('Notifications', () => {
       await Promise.resolve()
     })
 
-    expect(deleteEqMock).toHaveBeenCalled()
-    expect(container.textContent).toContain('No notifications yet.')
+    await waitFor(() => {
+      expect(deleteEqMock).toHaveBeenCalled()
+      expect(container.textContent).toContain('No notifications yet.')
+    })
 
     cleanup()
   })

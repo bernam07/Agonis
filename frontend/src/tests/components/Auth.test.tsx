@@ -53,6 +53,11 @@ describe('Auth', () => {
       options: { captchaToken: 'test-captcha-token' },
     })
 
+    const termsCheckbox = container.querySelector('input[type="checkbox"]') as HTMLInputElement
+    await act(async () => {
+      termsCheckbox.click()
+    })
+
     await act(async () => {
       ;(buttons[2] as HTMLButtonElement).click()
     })

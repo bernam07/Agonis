@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import type { ReactElement } from 'react'
 import { vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { CookieConsentProvider } from '../context/CookieConsentContext'
 
 // When vi.useFakeTimers() is active, React Query's internal scheduling (which
 // leans on setTimeout in places) needs fake timers advanced to make progress,
@@ -62,7 +63,11 @@ export function renderIntoDocument(element: ReactElement) {
   const root = createRoot(container)
 
   act(() => {
-    root.render(<QueryClientProvider client={queryClient}>{element}</QueryClientProvider>)
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <CookieConsentProvider>{element}</CookieConsentProvider>
+      </QueryClientProvider>,
+    )
   })
 
   return {

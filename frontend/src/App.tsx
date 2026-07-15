@@ -27,6 +27,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useUserGames } from './hooks/useUserGames'
 import { usePremiumStatus } from './hooks/usePremiumStatus'
+import { useCookieConsent } from './context/CookieConsentContext'
 
 const GameSearch = lazy(() => import('./components/game/GameSearch'))
 const MyLibrary = lazy(() => import('./components/library/MyLibrary'))
@@ -54,6 +55,7 @@ export default function App() {
   const userId = session?.user?.id ?? null
   const { data: globalLibrary = [] } = useUserGames(userId)
   const { data: isPremium } = usePremiumStatus(userId)
+  const { consent } = useCookieConsent()
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -291,7 +293,7 @@ export default function App() {
           setViewedUserId(null)
         }}
       />
-      <Analytics />
+      {consent === 'accepted' && <Analytics />}
     </div>
   )
 }

@@ -1,22 +1,15 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom/client'
-import * as Sentry from '@sentry/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import App from './App.tsx'
 import ErrorBoundary from './components/common/ErrorBoundary.tsx'
+import CookieConsentBanner from './components/common/CookieConsentBanner.tsx'
+import { CookieConsentProvider } from './context/CookieConsentContext.tsx'
+import { initSentryIfConsented } from './lib/sentry.ts'
 import './index.css'
 
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN
-
-if (sentryDsn && import.meta.env.PROD) {
-  Sentry.init({
-    dsn: sentryDsn,
-    environment: import.meta.env.MODE,
-    integrations: [Sentry.browserTracingIntegration()],
-    tracesSampleRate: 0.2,
-  })
-}
+initSentryIfConsented()
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,8 +25,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        {React.createElement(App as unknown as React.ComponentType)}
-        <Toaster richColors position="top-center" theme="system" />
+        <CookieConsentProvider>
+          {React.createElement(App as unknown as React.ComponentType)}
+          <Toaster richColors position="top-center" theme="system" />
+          <CookieConsentBanner />
+        </CookieConsentProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>,

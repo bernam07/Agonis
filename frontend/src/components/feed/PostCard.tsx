@@ -14,8 +14,9 @@
    limitations under the License.
 */
 
-import { Trash2, AlertTriangle } from 'lucide-react'
+import { Trash2, AlertTriangle, Flag } from 'lucide-react'
 import PostComments from './PostComments'
+import PremiumUsername from '../common/PremiumUsername'
 
 interface PostCardProps {
   post: any;
@@ -34,12 +35,13 @@ interface PostCardProps {
   setCommentInputs: (fn: (prev: Record<string, string>) => Record<string, string>) => void;
   handleAddComment: (e: React.FormEvent, postId: string, postAuthorId: string) => void;
   renderContent: (text: string) => React.ReactNode;
+  onReportPost: (post: any) => void;
 }
 
 export default function PostCard({
   post, currentUser, isExpanded, isRevealed, onUserClick, deletePost, handleGameClick,
   toggleLike, toggleCommentsVisibility, revealSpoiler, setPostToShare,
-  deleteComment, commentInputs, setCommentInputs, handleAddComment, renderContent
+  deleteComment, commentInputs, setCommentInputs, handleAddComment, renderContent, onReportPost
 }: PostCardProps) {
   const isSpoiler = post.has_spoilers && !isRevealed
 
@@ -63,7 +65,11 @@ export default function PostCard({
           </div>
           <div>
             <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-              @{post.profiles?.username || 'unknown'}
+              <PremiumUsername
+                username={post.profiles?.username}
+                isPremium={post.profiles?.is_premium}
+                accentColor={post.profiles?.accent_color}
+              />
             </div>
             <div className="text-xs font-medium text-zinc-500">
               {new Date(post.created_at).toLocaleString([], {
@@ -74,13 +80,21 @@ export default function PostCard({
           </div>
         </div>
 
-        {currentUser?.id === post.profiles.id && (
+        {currentUser?.id === post.profiles.id ? (
           <button
             onClick={() => deletePost(post.id)}
             className="text-zinc-600 hover:text-rose-500 transition-colors p-1"
             title="Delete Post"
           >
             <Trash2 className="w-5 h-5" />
+          </button>
+        ) : (
+          <button
+            onClick={() => onReportPost(post)}
+            className="text-zinc-600 hover:text-rose-500 transition-colors p-1"
+            title="Report Post"
+          >
+            <Flag className="w-4 h-4" />
           </button>
         )}
       </div>

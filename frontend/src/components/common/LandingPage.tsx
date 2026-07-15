@@ -14,15 +14,17 @@
    limitations under the License.
 */
 
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { Library, Star, Users } from 'lucide-react'
 import Footer from './Footer'
-import PrivacyPolicy from '../legal/PrivacyPolicy'
-import FAQ from '../legal/FAQ'
+
+const PrivacyPolicy = lazy(() => import('../legal/PrivacyPolicy'))
+const FAQ = lazy(() => import('../legal/FAQ'))
+const TermsOfService = lazy(() => import('../legal/TermsOfService'))
 
 export default function LandingPage({ onStart }: { onStart: () => void }) {
-  const [currentView, setCurrentView] = useState<'landing' | 'policy' | 'faq'>('landing')
+  const [currentView, setCurrentView] = useState<'landing' | 'policy' | 'faq' | 'terms'>('landing')
 
   if (currentView === 'policy') {
     return (
@@ -34,7 +36,9 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           >
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </button>
-          <PrivacyPolicy />
+          <Suspense fallback={null}>
+            <PrivacyPolicy />
+          </Suspense>
         </div>
       </div>
     )
@@ -50,7 +54,27 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           >
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </button>
-          <FAQ />
+          <Suspense fallback={null}>
+            <FAQ />
+          </Suspense>
+        </div>
+      </div>
+    )
+  }
+
+  if (currentView === 'terms') {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white p-6 flex flex-col items-center pt-12 transition-colors duration-300">
+        <div className="w-full max-w-3xl">
+          <button
+            onClick={() => setCurrentView('landing')}
+            className="flex items-center gap-2 text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white mb-8 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </button>
+          <Suspense fallback={null}>
+            <TermsOfService />
+          </Suspense>
         </div>
       </div>
     )

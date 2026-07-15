@@ -18,7 +18,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '../../lib/supabase'
 import GameModal from '../game/GameModal'
-import { Trophy, Star, Users, Flame, Lock, Crown } from 'lucide-react'
+import { Trophy, Star, Users, Flame, Lock } from 'lucide-react'
 import StarDisplay from '../common/StarDisplay'
 import ProfileHeader from './ProfileHeader'
 import ProfileActivity from './ProfileActivity'
@@ -26,11 +26,14 @@ import ProfileCustomLists from './ProfileCustomLists'
 import ProfileEditForm from './ProfileEditForm'
 import ProfileLibraryGrid from './ProfileLibraryGrid'
 import FollowListModal from './FollowListModal'
-import PremiumTab from './PremiumTab'
 import ProfileInsights from './ProfileInsights'
+import ProfileMasterpieces from './ProfileMasterpieces'
+import ReportModal from '../common/ReportModal'
 import { confirmToast } from '../../lib/confirmToast'
 import { FREE_LIST_LIMIT } from '../../lib/plans'
-import { useInvalidateUserGames } from '../../hooks/useUserGames'
+import { useCurrentUserId } from '../../hooks/useCurrentUserId'
+import { useBlockedUsers, useSetUserBlocked } from '../../hooks/useBlockedUsers'
+import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 
 export default function Profile({
   userId,
@@ -49,7 +52,7 @@ export default function Profile({
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const [viewMode, setViewMode] = useState<'activity' | 'library' | 'lists' | 'insights' | 'premium'>('activity')
+  const [viewMode, setViewMode] = useState<'activity' | 'library' | 'lists' | 'insights'>('activity')
 
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [sortOrder, setSortOrder] = useState<'recent' | 'rating' | 'name'>('recent')
@@ -74,15 +77,20 @@ export default function Profile({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [expandedListId, setExpandedListId] = useState<string | null>(null)
   const [listGames, setListGames] = useState<any[]>([])
+  const [showReportUser, setShowReportUser] = useState(false)
 
-  const invalidateUserGames = useInvalidateUserGames()
+  const { data: currentUserId } = useCurrentUserId()
+  const { data: blockedIds = [] } = useBlockedUsers(currentUserId)
+  const setUserBlocked = useSetUserBlocked()
+  const isBlocked = !!profile && blockedIds.includes(profile.id)
+
+  useDocumentMeta(profile?.username, profile?.bio)
 
   useEffect(() => {
     loadProfile()
   }, [userId])
 
   useEffect(() => {
-    if (viewMode === 'premium' && profile?.is_premium) setViewMode('activity')
     if (viewMode === 'insights' && !profile?.is_premium) setViewMode('activity')
   }, [viewMode, profile?.is_premium])
 
@@ -183,10 +191,10 @@ export default function Profile({
   const openFollowList = async (type: 'followers' | 'following') => {
     if (!canViewLibrary) return
     if (type === 'followers') {
-      const { data } = await supabase.from('follows').select('profiles!follows_follower_id_fkey(id, username, avatar_url)').eq('following_id', profile.id)
+      const { data } = await supabase.from('follows').select('profiles!follows_follower_id_fkey(id, username, avatar_url, is_premium, accent_color)').eq('following_id', profile.id)
       if (data) setFollowModalData({ title: 'Followers', users: data.map((d: any) => d.profiles) })
     } else {
-      const { data } = await supabase.from('follows').select('profiles!follows_following_id_fkey(id, username, avatar_url)').eq('follower_id', profile.id)
+      const { data } = await supabase.from('follows').select('profiles!follows_following_id_fkey(id, username, avatar_url, is_premium, accent_color)').eq('follower_id', profile.id)
       if (data) setFollowModalData({ title: 'Following', users: data.map((d: any) => d.profiles) })
     }
   }
@@ -258,32 +266,18 @@ export default function Profile({
     setProfile({ ...profile, accent_color: color })
   }
 
-  const handleUpgradeClick = async () => {
-    const { data, error } = await supabase.functions.invoke('create-checkout-session')
-    if (error || !data?.url) {
-      toast.error('Could not start checkout. Please try again.')
-      return
-    }
-    window.location.href = data.url
-  }
-
-  const handleImportSteam = async (steamId: string) => {
-    const { data, error } = await supabase.functions.invoke('import-steam', { body: { steamId } })
-    if (error) {
-      toast.error('Steam import failed. Check the Steam ID/profile URL and try again.')
-      return
-    }
-    if (data?.error) {
-      toast.error(data.error)
-      return
-    }
-    toast.success(
-      data.message ?? `Imported ${data.imported} game${data.imported === 1 ? '' : 's'} from Steam${data.skipped ? ` (${data.skipped} already tracked or unmatched)` : ''}.`
-    )
-    if (profile?.id) {
-      loadProfile()
-      invalidateUserGames(profile.id)
-    }
+  const handleToggleBlock = () => {
+    if (!currentUserId || !profile) return
+    const blocked = isBlocked
+    confirmToast(blocked ? `Unblock @${profile.username}?` : `Block @${profile.username}? You won't see their posts, and they won't be able to follow you.`, () => {
+      setUserBlocked.mutate(
+        { blockerId: currentUserId, blockedId: profile.id, blocked: !blocked },
+        {
+          onSuccess: () => toast.success(blocked ? 'User unblocked.' : 'User blocked.'),
+          onError: () => toast.error('Something went wrong. Please try again.'),
+        }
+      )
+    })
   }
 
   const handleDeleteList = (id: string) => {
@@ -330,7 +324,7 @@ export default function Profile({
         ratedCount++
         ratingSum += g.rating
       }
-      if (g.rating >= 4.5) favorites.push(g) // Modifiquei aqui para >= 4.5 para ser mais realista
+      if (g.rating >= 5) favorites.push(g)
 
       if (g.platforms) {
         g.platforms.forEach((p: any) => { platforms[p.name] = (platforms[p.name] || 0) + 1 })
@@ -389,7 +383,7 @@ export default function Profile({
     return result
   }, [userLibrary, sortOrder, filterStatus])
 
-  const canViewLibrary = isCurrentUser || profile?.is_public
+  const canViewLibrary = !isBlocked && (isCurrentUser || profile?.is_public)
 
   if (loading) return <div className="text-zinc-500 text-center py-10 font-medium">Loading profile...</div>
   if (!profile) return <div className="text-zinc-500 text-center py-10 font-medium">User not found.</div>
@@ -425,11 +419,12 @@ export default function Profile({
     <div className="max-w-4xl mx-auto flex flex-col gap-10">
       
       {/* ===== HEADER DO PERFIL ===== */}
-      <ProfileHeader 
+      <ProfileHeader
         profile={profile} isCurrentUser={isCurrentUser} isEditing={isEditing} setIsEditing={setIsEditing}
         followersCount={followersCount} followingCount={followingCount} isFollowing={isFollowing} isRequested={isRequested}
         toggleFollow={toggleFollow} openFollowList={openFollowList} canViewLibrary={canViewLibrary}
         onBack={onBack} userId={userId}
+        isBlocked={isBlocked} onToggleBlock={handleToggleBlock} onReportUser={() => setShowReportUser(true)}
       />
 
       {/* ===== FORMULÁRIO DE SETTINGS ===== */}
@@ -442,7 +437,7 @@ export default function Profile({
           saveProfile={saveProfile} onCancel={() => setIsEditing(false)}
           isPremium={!!profile?.is_premium} accentColor={profile?.accent_color ?? null}
           onSelectAccentColor={handleSelectAccentColor}
-          onImportSteam={handleImportSteam}
+          userId={profile?.id} username={profile?.username}
         />
       )}
 
@@ -453,8 +448,23 @@ export default function Profile({
             <div className="w-16 h-16 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 mb-4">
               <Lock className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-2">This profile is private</h3>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium">Follow @{profile.username} to see their game library and posts.</p>
+            {isBlocked ? (
+              <>
+                <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-2">You've blocked @{profile.username}</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium mb-4">You won't see their posts or activity.</p>
+                <button
+                  onClick={handleToggleBlock}
+                  className="text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  Unblock
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-2">This profile is private</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium">Follow @{profile.username} to see their game library and posts.</p>
+              </>
+            )}
           </div>
         </div>
       ) : (
@@ -481,6 +491,8 @@ export default function Profile({
             </div>
           </div>
 
+          <ProfileMasterpieces favorites={libStats.favorites} handleGameClick={handleGameClick} />
+
           <div>
             <div className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-6 mt-8 overflow-x-auto custom-scrollbar">
               <button onClick={() => setViewMode('activity')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'activity' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Feed Activity</button>
@@ -488,12 +500,6 @@ export default function Profile({
               <button onClick={() => setViewMode('lists')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'lists' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Custom Lists ({lists.length})</button>
               {isCurrentUser && profile?.is_premium && (
                 <button onClick={() => setViewMode('insights')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors ${viewMode === 'insights' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 dark:border-indigo-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Insights</button>
-              )}
-              {isCurrentUser && !profile?.is_premium && (
-                <button onClick={() => setViewMode('premium')} className={`pb-2 whitespace-nowrap text-sm font-bold transition-colors flex items-center gap-1.5 ${viewMode === 'premium' ? 'text-amber-500 border-b-2 border-amber-500' : 'text-amber-600/80 dark:text-amber-400/80 hover:text-amber-500'}`}>
-                  <Crown className="w-3.5 h-3.5" />
-                  Premium
-                </button>
               )}
             </div>
 
@@ -525,10 +531,6 @@ export default function Profile({
                 monthlyActivity={libStats.monthlyActivity} maxMonthly={libStats.maxMonthly} totalTracked={libStats.total}
               />
             )}
-
-            {viewMode === 'premium' && isCurrentUser && !profile?.is_premium && (
-              <PremiumTab onUpgradeClick={handleUpgradeClick} />
-            )}
           </div>
         </>
       )}
@@ -542,6 +544,15 @@ export default function Profile({
 
       {followModalData && (
         <FollowListModal data={followModalData} onClose={() => setFollowModalData(null)} onUserClick={onUserClick} />
+      )}
+
+      {showReportUser && currentUserId && profile && (
+        <ReportModal
+          targetType="user"
+          targetId={profile.id}
+          reporterId={currentUserId}
+          onClose={() => setShowReportUser(false)}
+        />
       )}
     </div>
   )

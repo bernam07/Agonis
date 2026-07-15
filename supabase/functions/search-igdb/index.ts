@@ -15,6 +15,7 @@ serve(async (req) => {
     const { searchQuery, offset = 0, limit = 20 } = await req.json()
     const pageLimit = Math.min(Number(limit) || 20, 50)
     const pageOffset = Math.max(Number(offset) || 0, 0)
+    const safeSearchQuery = String(searchQuery ?? '').replace(/"/g, '\\"')
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -44,6 +45,12 @@ serve(async (req) => {
     const tokenData = await tokenResponse.json()
     const accessToken = tokenData.access_token
 
+    // IGDB's fuzzy `search` ranks a limited internal candidate set by relevance, and applying a
+    // strict `where` on top of it can zero out results entirely for franchises whose top matches
+    // are mostly remasters/editions (the filter has nothing left to keep). So we fetch a generous
+    // unfiltered candidate batch and filter for main-game/released status ourselves instead.
+    const candidateLimit = Math.min(pageOffset + pageLimit + 30, 500)
+
     const igdbResponse = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers: {
@@ -51,10 +58,18 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'text/plain',
       },
-      body: `search "${searchQuery}"; fields name, cover.url, summary, platforms.name; where category = 0 & version_parent = null & status != (6,7); limit ${pageLimit}; offset ${pageOffset};`
+      body: `search "${safeSearchQuery}"; fields name, cover.url, summary, platforms.name, category, version_parent, status; limit ${candidateLimit};`
     })
 
-    const igdbData = await igdbResponse.json()
+    const igdbCandidates = await igdbResponse.json()
+
+    // IGDB omits fields that hold their default value, so a main game's `category` (default 0)
+    // is frequently absent from the response rather than explicitly `0` — treat missing as main game.
+    const igdbData = Array.isArray(igdbCandidates)
+      ? igdbCandidates
+          .filter((g: any) => (g.category === 0 || g.category === undefined) && !g.version_parent && g.status !== 6 && g.status !== 7)
+          .slice(pageOffset, pageOffset + pageLimit)
+      : igdbCandidates
 
     if (Array.isArray(igdbData)) {
       for (const game of igdbData) {

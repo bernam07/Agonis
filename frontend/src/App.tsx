@@ -14,31 +14,34 @@
    limitations under the License.
 */
 
-import { useState, useEffect } from 'react'
-import { toast } from 'sonner'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { supabase } from './lib/supabase'
-import GameSearch from './components/game/GameSearch'
 import Auth from './components/auth/Auth'
-import MyLibrary from './components/library/MyLibrary'
-import Feed from './components/feed/Feed'
-import Profile from './components/profile/Profile'
 import Footer from './components/common/Footer'
-import PrivacyPolicy from './components/legal/PrivacyPolicy'
 import Notifications from './components/notifications/Notifications'
 import LandingPage from './components/common/LandingPage'
-import FAQ from './components/legal/FAQ'
 import { AnimatePresence } from 'framer-motion'
 import PageTransition from './components/common/PageTransition'
-import { Sun, Moon} from 'lucide-react'
+import { Sun, Moon, Crown } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useUserGames } from './hooks/useUserGames'
+import { usePremiumStatus } from './hooks/usePremiumStatus'
+
+const GameSearch = lazy(() => import('./components/game/GameSearch'))
+const MyLibrary = lazy(() => import('./components/library/MyLibrary'))
+const Feed = lazy(() => import('./components/feed/Feed'))
+const Profile = lazy(() => import('./components/profile/Profile'))
+const PrivacyPolicy = lazy(() => import('./components/legal/PrivacyPolicy'))
+const FAQ = lazy(() => import('./components/legal/FAQ'))
+const TermsOfService = lazy(() => import('./components/legal/TermsOfService'))
+const PremiumTab = lazy(() => import('./components/profile/PremiumTab'))
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [showAuth, setShowAuth] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    'feed' | 'search' | 'library' | 'profile' | 'policy' | 'faq'
+    'feed' | 'search' | 'library' | 'profile' | 'premium' | 'policy' | 'faq' | 'terms'
   >('feed')
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
 
@@ -50,18 +53,7 @@ export default function App() {
   const queryClient = useQueryClient()
   const userId = session?.user?.id ?? null
   const { data: globalLibrary = [] } = useUserGames(userId)
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const upgraded = params.get('upgraded')
-    if (upgraded === 'true') {
-      toast.success('Payment successful! Your Premium features are activating and should appear within a few seconds.')
-      window.history.replaceState({}, '', window.location.pathname)
-    } else if (upgraded === 'cancelled') {
-      toast.info('Checkout cancelled — no charge was made.')
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-  }, [])
+  const { data: isPremium } = usePremiumStatus(userId)
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -141,6 +133,17 @@ export default function App() {
             <button onClick={() => goToTab('profile')} className={navItemClass('profile')}>
               Profile
             </button>
+            <button
+              onClick={() => goToTab('premium')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                isPremium
+                  ? navItemClass('premium')
+                  : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5" />
+              {isPremium ? 'Premium' : 'Go Premium'}
+            </button>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
@@ -197,6 +200,20 @@ export default function App() {
             <button onClick={() => goToTab('profile')} className={`${navItemClass('profile')} text-left`}>
               Profile
             </button>
+            <button
+              onClick={() => {
+                goToTab('premium')
+                setMobileMenuOpen(false)
+              }}
+              className={`flex items-center gap-1.5 text-left px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                isPremium
+                  ? navItemClass('premium')
+                  : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5" />
+              {isPremium ? 'Premium' : 'Go Premium'}
+            </button>
             <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
             <button
               onClick={() => supabase.auth.signOut()}
@@ -209,6 +226,7 @@ export default function App() {
       </nav>
 
       <main className="max-w-5xl mx-auto px-4 flex-1 w-full flex min-w-0">
+        <Suspense fallback={<div className="w-full text-center py-20 text-zinc-500 font-medium">Loading...</div>}>
         <AnimatePresence mode="wait">
           {activeTab === 'feed' && (
             <PageTransition keyProp="feed">
@@ -243,6 +261,11 @@ export default function App() {
               />
             </PageTransition>
           )}
+          {activeTab === 'premium' && (
+            <PageTransition keyProp="premium">
+              <PremiumTab isPremium={!!isPremium} />
+            </PageTransition>
+          )}
           {activeTab === 'policy' && (
             <PageTransition keyProp="policy">
               <PrivacyPolicy />
@@ -253,7 +276,13 @@ export default function App() {
               <FAQ />
             </PageTransition>
           )}
+          {activeTab === 'terms' && (
+            <PageTransition keyProp="terms">
+              <TermsOfService />
+            </PageTransition>
+          )}
         </AnimatePresence>
+        </Suspense>
       </main>
 
       <Footer

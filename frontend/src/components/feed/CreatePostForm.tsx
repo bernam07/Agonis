@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+import { AlertTriangle, Image as ImageIcon } from 'lucide-react'
+
 interface CreatePostFormProps {
   library: any[];
   content: string;
@@ -40,15 +42,6 @@ export default function CreatePostForm({
   return (
     <div className="mb-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
       <form onSubmit={createPost} className="flex flex-col gap-3">
-        <label className="flex items-center gap-2 mt-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={hasSpoilers}
-            onChange={(e) => setHasSpoilers(e.target.checked)}
-            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
-          />
-          <span className="text-xs font-bold text-amber-600 dark:text-amber-500">Mark as Spoiler</span>
-        </label>
         {selectedGame && (
           <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-2 rounded-xl w-max pr-4">
             {selectedGame.cover?.url && (
@@ -144,7 +137,8 @@ export default function CreatePostForm({
               + Tag Game
             </button>
 
-            <label className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-zinc-50 dark:bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 transition-colors cursor-pointer flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors cursor-pointer bg-transparent text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700">
+              <ImageIcon className="w-3.5 h-3.5" />
               Image
               <input
                 type="file"
@@ -153,6 +147,20 @@ export default function CreatePostForm({
                 onChange={(e) => e.target.files && setImageFile(e.target.files[0])}
               />
             </label>
+
+            <button
+              type="button"
+              onClick={() => setHasSpoilers(!hasSpoilers)}
+              aria-pressed={hasSpoilers}
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
+                hasSpoilers
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-500 border-amber-500/50'
+                  : 'bg-transparent text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" fill={hasSpoilers ? 'currentColor' : 'none'} />
+              Spoiler
+            </button>
           </div>
 
           <button

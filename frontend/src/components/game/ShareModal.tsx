@@ -17,10 +17,10 @@
 import { useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Download, X } from 'lucide-react'
-import html2canvas from 'html2canvas'
 import { toast } from 'sonner'
 import { supabase } from '../../lib/supabase'
 import StarDisplay from '../common/StarDisplay'
+import PremiumUsername from '../common/PremiumUsername'
 import type { Game, UserGame } from '../../types'
 
 interface ShareModalProps {
@@ -35,6 +35,7 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
   const [username, setUsername] = useState<string>('user')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [isPremium, setIsPremium] = useState(false)
+  const [accentColor, setAccentColor] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -44,13 +45,14 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
       if (user) {
         const { data } = await supabase
           .from('profiles')
-          .select('username, avatar_url, is_premium')
+          .select('username, avatar_url, is_premium, accent_color')
           .eq('id', user.id)
           .single()
         if (data) {
           setUsername(data.username)
           setAvatarUrl(data.avatar_url)
           setIsPremium(!!data.is_premium)
+          setAccentColor(data.accent_color)
         }
       }
     }
@@ -62,6 +64,7 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
     setExporting(true)
 
     try {
+      const { default: html2canvas } = await import('html2canvas')
       const canvas = await html2canvas(cardRef.current, {
         scale: 3,
         backgroundColor: '#09090b',
@@ -151,7 +154,9 @@ export default function ShareModal({ game, userGame, onClose }: ShareModalProps)
               </div>
               <div>
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none">Review by</p>
-                <p className="text-sm font-bold text-zinc-200 leading-tight">@{username}</p>
+                <p className="text-sm font-bold text-zinc-200 leading-tight">
+                  <PremiumUsername username={username} isPremium={isPremium} accentColor={accentColor} iconClassName="w-3.5 h-3.5" />
+                </p>
               </div>
             </div>
 

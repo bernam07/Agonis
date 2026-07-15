@@ -14,9 +14,13 @@
    limitations under the License.
 */
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { supabase } from '../../lib/supabase'
 import { AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react'
+
+const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY
+const CAPTCHA_REQUIRED = !!HCAPTCHA_SITE_KEY
 
 export default function Auth({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState('')
@@ -26,6 +30,14 @@ export default function Auth({ onBack }: { onBack: () => void }) {
   const [isResetting, setIsResetting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+
+  const captchaRef = useRef<HCaptcha>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+
+  const resetCaptcha = () => {
+    setCaptchaToken(null)
+    captchaRef.current?.resetCaptcha()
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,9 +49,19 @@ export default function Auth({ onBack }: { onBack: () => void }) {
       return
     }
 
+    if (CAPTCHA_REQUIRED && !captchaToken) {
+      setErrorMsg('Please complete the captcha.')
+      return
+    }
+
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    })
     if (error) setErrorMsg(error.message)
+    resetCaptcha()
     setLoading(false)
   }
 
@@ -68,9 +90,18 @@ export default function Auth({ onBack }: { onBack: () => void }) {
       return
     }
 
+    if (CAPTCHA_REQUIRED && !captchaToken) {
+      setErrorMsg('Please complete the captcha.')
+      return
+    }
+
     setLoading(true)
-    const { error } = await supabase.auth.signUp({ email, password })
-    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    })
+
     if (error) {
       if (error.message.toLowerCase().includes('already registered')) {
         setErrorMsg('This email is already registered. Please sign in.')
@@ -80,6 +111,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
     } else {
       setSuccessMsg('Account created! Please check your email to verify.')
     }
+    resetCaptcha()
     setLoading(false)
   }
 
@@ -93,9 +125,15 @@ export default function Auth({ onBack }: { onBack: () => void }) {
       return
     }
 
+    if (CAPTCHA_REQUIRED && !captchaToken) {
+      setErrorMsg('Please complete the captcha.')
+      return
+    }
+
     setLoading(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin,
+      ...(captchaToken ? { captchaToken } : {}),
     })
 
     if (error) {
@@ -103,6 +141,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
     } else {
       setSuccessMsg('Password reset link sent to your email!')
     }
+    resetCaptcha()
     setLoading(false)
   }
 
@@ -124,14 +163,14 @@ export default function Auth({ onBack }: { onBack: () => void }) {
         </div>
 
         {errorMsg && (
-          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 text-rose-400 text-sm font-bold">
+          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 text-rose-600 dark:text-rose-400 text-sm font-bold">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             <p>{errorMsg}</p>
           </div>
         )}
 
         {successMsg && (
-          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-3 text-emerald-400 text-sm font-bold">
+          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-3 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
             <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
             <p>{successMsg}</p>
           </div>
@@ -175,12 +214,23 @@ export default function Auth({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
+          {HCAPTCHA_SITE_KEY && (
+            <div className="flex justify-center">
+              <HCaptcha
+                ref={captchaRef}
+                sitekey={HCAPTCHA_SITE_KEY}
+                onVerify={setCaptchaToken}
+                onExpire={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
+
           <div className="flex flex-col gap-3 mt-4">
             {isResetting ? (
               <>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || (CAPTCHA_REQUIRED && !captchaToken)}
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm shadow-lg shadow-indigo-600/10"
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
@@ -201,7 +251,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
               <>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || (CAPTCHA_REQUIRED && !captchaToken)}
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm shadow-lg shadow-indigo-600/10"
                 >
                   {loading ? 'Connecting...' : 'Sign In'}
@@ -209,7 +259,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
                 <button
                   type="button"
                   onClick={handleSignUp}
-                  disabled={loading}
+                  disabled={loading || (CAPTCHA_REQUIRED && !captchaToken)}
                   className="w-full bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm border border-zinc-300 dark:border-zinc-700"
                 >
                   Create Account

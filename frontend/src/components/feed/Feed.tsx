@@ -23,8 +23,10 @@ import GameModal from '../game/GameModal'
 import { PostSkeleton } from '../common/Skeletons'
 import CreatePostForm from './CreatePostForm'
 import PostCard from './PostCard'
+import ReportModal from '../common/ReportModal'
 import { useCurrentUserId } from '../../hooks/useCurrentUserId'
 import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger'
+import { useBlockedUsers } from '../../hooks/useBlockedUsers'
 import { confirmToast } from '../../lib/confirmToast'
 
 const POSTS_PER_PAGE = 20
@@ -39,11 +41,11 @@ async function fetchPostsPage(pageParam: number) {
     .select(
       `
       id, content, created_at, igdb_id, game_name, game_cover, image_url, has_spoilers,
-      profiles!posts_user_id_fkey (id, username, avatar_url, is_premium),
+      profiles!posts_user_id_fkey (id, username, avatar_url, is_premium, accent_color),
       likes (user_id),
       comments (
         id, content, created_at, user_id,
-        profiles!comments_user_id_fkey (id, username, avatar_url)
+        profiles!comments_user_id_fkey (id, username, avatar_url, is_premium, accent_color)
       )
     `
     )
@@ -63,7 +65,10 @@ export default function Feed({
 }) {
   const { data: currentUserId } = useCurrentUserId()
   const currentUser = currentUserId ? { id: currentUserId } : null
+  const { data: blockedIds = [] } = useBlockedUsers(currentUserId)
   const queryClient = useQueryClient()
+
+  const [reportTarget, setReportTarget] = useState<any>(null)
 
   const [content, setContent] = useState('')
   const [selectedGame, setSelectedGame] = useState<any>(null)
@@ -99,13 +104,15 @@ export default function Feed({
     !!hasNextPage && !isFetchingNextPage,
   )
 
-  const posts = (data?.pages.flat() ?? []).map((post: any) => ({
-    ...post,
-    likesCount: post.likes.length,
-    hasLiked: currentUserId ? post.likes.some((like: any) => like.user_id === currentUserId) : false,
-    commentsCount: post.comments?.length || 0,
-    comments: post.comments || [],
-  }))
+  const posts = (data?.pages.flat() ?? [])
+    .filter((post: any) => !blockedIds.includes(post.profiles?.id))
+    .map((post: any) => ({
+      ...post,
+      likesCount: post.likes.length,
+      hasLiked: currentUserId ? post.likes.some((like: any) => like.user_id === currentUserId) : false,
+      commentsCount: post.comments?.length || 0,
+      comments: post.comments || [],
+    }))
 
   const createPostMutation = useMutation({
     mutationFn: async () => {
@@ -211,19 +218,23 @@ export default function Feed({
       }
     })
 
-    if (hasLiked) {
-      await supabase.from('likes').delete().match({ post_id: postId, user_id: currentUserId })
-    } else {
-      await supabase.from('likes').insert({ post_id: postId, user_id: currentUserId })
+    const { error } = hasLiked
+      ? await supabase.from('likes').delete().match({ post_id: postId, user_id: currentUserId })
+      : await supabase.from('likes').insert({ post_id: postId, user_id: currentUserId })
 
-      if (currentUserId !== authorId) {
-        await supabase.from('notifications').insert({
-          receiver_id: authorId,
-          actor_id: currentUserId,
-          type: 'like',
-          post_id: postId,
-        })
-      }
+    if (error) {
+      toast.error('Failed to update like. Please try again.')
+      queryClient.invalidateQueries({ queryKey: POSTS_QUERY_KEY })
+      return
+    }
+
+    if (!hasLiked && currentUserId !== authorId) {
+      await supabase.from('notifications').insert({
+        receiver_id: authorId,
+        actor_id: currentUserId,
+        type: 'like',
+        post_id: postId,
+      })
     }
   }
 
@@ -405,6 +416,7 @@ export default function Feed({
               setCommentInputs={setCommentInputs}
               handleAddComment={handleAddComment}
               renderContent={renderContent}
+              onReportPost={setReportTarget}
             />
           ))
         )}
@@ -419,6 +431,15 @@ export default function Feed({
       )}
 
       {postToShare && <SharePostModal post={postToShare} onClose={() => setPostToShare(null)} />}
+
+      {reportTarget && currentUserId && (
+        <ReportModal
+          targetType="post"
+          targetId={reportTarget.id}
+          reporterId={currentUserId}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
 
       {activeModalGame && (
         <GameModal

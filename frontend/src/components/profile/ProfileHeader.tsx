@@ -14,7 +14,8 @@
    limitations under the License.
 */
 
-import { Crown } from 'lucide-react'
+import { Ban, Flag } from 'lucide-react'
+import PremiumUsername from '../common/PremiumUsername'
 
 interface ProfileHeaderProps {
   profile: any;
@@ -30,13 +31,16 @@ interface ProfileHeaderProps {
   canViewLibrary: boolean;
   onBack?: () => void;
   userId?: string | null;
+  isBlocked: boolean;
+  onToggleBlock: () => void;
+  onReportUser: () => void;
 }
 
 export default function ProfileHeader({
   profile, isCurrentUser, isEditing, setIsEditing,
   followersCount, followingCount, isFollowing, isRequested,
   toggleFollow, openFollowList, canViewLibrary,
-  onBack, userId
+  onBack, userId, isBlocked, onToggleBlock, onReportUser
 }: ProfileHeaderProps) {
 
   // O formulário de edição fica no componente pai por agora para não complicar a gestão de estado
@@ -66,21 +70,40 @@ export default function ProfileHeader({
 
         <div className="flex-1 w-full text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start mb-2">
-            <h2
-              className="text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2"
-              style={profile.is_premium && profile.accent_color ? { color: profile.accent_color } : undefined}
-            >
-              @{profile.username}
-              {profile.is_premium && <Crown className="w-5 h-5 text-amber-500 shrink-0" aria-label="Premium member" />}
+            <h2 className="text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2">
+              <PremiumUsername
+                username={profile.username}
+                isPremium={profile.is_premium}
+                accentColor={profile.accent_color}
+                iconClassName="w-5 h-5"
+              />
             </h2>
             {isCurrentUser ? (
               <button onClick={() => setIsEditing(true)} className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 rounded-lg transition-colors">
                 Settings
               </button>
             ) : (
-              <button onClick={toggleFollow} className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-colors ${isFollowing || isRequested ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-rose-500 hover:text-white' : 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200'}`}>
-                {isFollowing ? 'Following' : isRequested ? 'Requested' : 'Follow'}
-              </button>
+              <div className="flex items-center gap-2">
+                {!isBlocked && (
+                  <button onClick={toggleFollow} className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-colors ${isFollowing || isRequested ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-rose-500 hover:text-white' : 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200'}`}>
+                    {isFollowing ? 'Following' : isRequested ? 'Requested' : 'Follow'}
+                  </button>
+                )}
+                <button
+                  onClick={onToggleBlock}
+                  title={isBlocked ? 'Unblock' : 'Block'}
+                  className={`p-2 rounded-lg border transition-colors ${isBlocked ? 'border-rose-500 text-rose-500 bg-rose-50 dark:bg-rose-500/10' : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-rose-500 hover:border-rose-500'}`}
+                >
+                  <Ban className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={onReportUser}
+                  title="Report User"
+                  className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-rose-500 hover:border-rose-500 transition-colors"
+                >
+                  <Flag className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
 

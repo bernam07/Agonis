@@ -19,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { Bell } from 'lucide-react'
 import { useCurrentUserId } from '../../hooks/useCurrentUserId'
+import PremiumUsername from '../common/PremiumUsername'
 
 async function fetchNotifications(userId: string) {
   const { data, error } = await supabase
@@ -26,7 +27,7 @@ async function fetchNotifications(userId: string) {
     .select(
       `
       id, type, is_read, created_at,
-      profiles!notifications_actor_id_fkey (id, username, avatar_url)
+      profiles!notifications_actor_id_fkey (id, username, avatar_url, is_premium, accent_color)
     `
     )
     .eq('receiver_id', userId)
@@ -182,7 +183,12 @@ export default function Notifications({ onUserClick }: { onUserClick: (id: strin
 
                   <div className="text-sm flex-1 pr-4">
                     <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                      @{notif.profiles?.username || 'unknown'}{' '}
+                      <PremiumUsername
+                        username={notif.profiles?.username}
+                        isPremium={notif.profiles?.is_premium}
+                        accentColor={notif.profiles?.accent_color}
+                        iconClassName="w-3 h-3"
+                      />{' '}
                     </span>
                     <span className="text-zinc-600 dark:text-zinc-400">
                       {notif.type === 'like' && 'liked your post.'}

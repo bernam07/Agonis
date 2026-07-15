@@ -17,6 +17,7 @@
 import { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import * as htmlToImage from 'html-to-image'
+import PremiumUsername from '../common/PremiumUsername'
 
 export default function SharePostModal({ post, onClose }: any) {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -51,7 +52,13 @@ export default function SharePostModal({ post, onClose }: any) {
               )}
             </div>
             <div>
-              <div className="font-black text-white text-base">@{post.profiles.username}</div>
+              <div className="font-black text-white text-base">
+                <PremiumUsername
+                  username={post.profiles.username}
+                  isPremium={post.profiles?.is_premium}
+                  accentColor={post.profiles?.accent_color}
+                />
+              </div>
               {!post.profiles?.is_premium && (
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                   Agonis Post

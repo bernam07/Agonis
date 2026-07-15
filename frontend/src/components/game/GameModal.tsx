@@ -76,7 +76,7 @@ export default function GameModal({ game, userGame, onClose, onRefresh, isReadOn
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_games')
-        .select('rating, review, profiles ( username, avatar_url )')
+        .select('rating, review, profiles ( username, avatar_url, is_premium, accent_color )')
         .eq('igdb_id', igdbId)
         .not('rating', 'is', null)
       if (error) throw error

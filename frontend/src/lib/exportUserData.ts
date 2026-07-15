@@ -17,36 +17,32 @@
 import { supabase } from './supabase'
 
 export async function exportUserData(userId: string) {
-  const [profile, userGames, posts, comments, likes, lists, screenshots, following, followers, blocked] = await Promise.all([
+  const [profile, userGames, comments, likes, blocked] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', userId).single(),
-    supabase.from('user_games').select('*').eq('user_id', userId),
-    supabase.from('posts').select('*').eq('user_id', userId),
+    supabase.from('user_games').select('igdb_id, status, rating').eq('user_id', userId),
     supabase.from('comments').select('*').eq('user_id', userId),
     supabase.from('likes').select('*').eq('user_id', userId),
-    supabase.from('lists').select('*').eq('user_id', userId),
-    supabase.from('game_screenshots').select('*').eq('user_id', userId),
-    supabase.from('follows').select('*').eq('follower_id', userId),
-    supabase.from('follows').select('*').eq('following_id', userId),
     supabase.from('blocked_users').select('*').eq('blocker_id', userId),
   ])
 
-  const listIds = (lists.data ?? []).map((l: any) => l.id)
-  const listGames = listIds.length > 0
-    ? await supabase.from('list_games').select('*').in('list_id', listIds)
-    : { data: [] }
+  const gameIds = [...new Set((userGames.data ?? []).map((g: any) => g.igdb_id).filter(Boolean))]
+  const { data: igdbGames } = gameIds.length > 0
+    ? await supabase.functions.invoke('fetch-games', { body: { gameIds } })
+    : { data: [] as any[] }
+
+  const games = (userGames.data ?? []).map((g: any) => ({
+    name: igdbGames?.find((game: any) => Number(game.id) === Number(g.igdb_id))?.name ?? null,
+    igdb_id: g.igdb_id,
+    status: g.status,
+    rating: g.rating,
+  }))
 
   const exportData = {
     exported_at: new Date().toISOString(),
     profile: profile.data,
-    user_games: userGames.data,
-    posts: posts.data,
+    games,
     comments: comments.data,
     likes: likes.data,
-    lists: lists.data,
-    list_games: listGames.data,
-    game_screenshots: screenshots.data,
-    following: following.data,
-    followers: followers.data,
     blocked_users: blocked.data,
   }
 

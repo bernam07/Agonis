@@ -89,7 +89,7 @@ export default function MyLibrary({ userId }: MyLibraryProps) {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[180px]">
+          <div className="relative flex-1 min-w-45">
             <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"

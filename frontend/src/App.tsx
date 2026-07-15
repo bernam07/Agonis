@@ -15,7 +15,6 @@
 */
 
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { toast } from 'sonner'
 import { supabase } from './lib/supabase'
 import Auth from './components/auth/Auth'
 import Footer from './components/common/Footer'
@@ -23,12 +22,11 @@ import Notifications from './components/notifications/Notifications'
 import LandingPage from './components/common/LandingPage'
 import { AnimatePresence } from 'framer-motion'
 import PageTransition from './components/common/PageTransition'
-import { Sun, Moon, Crown, CreditCard } from 'lucide-react'
+import { Sun, Moon, Crown } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useUserGames } from './hooks/useUserGames'
 import { usePremiumStatus } from './hooks/usePremiumStatus'
-import { startCheckout, openBillingPortal } from './lib/billing'
 
 const GameSearch = lazy(() => import('./components/game/GameSearch'))
 const MyLibrary = lazy(() => import('./components/library/MyLibrary'))
@@ -36,13 +34,14 @@ const Feed = lazy(() => import('./components/feed/Feed'))
 const Profile = lazy(() => import('./components/profile/Profile'))
 const PrivacyPolicy = lazy(() => import('./components/legal/PrivacyPolicy'))
 const FAQ = lazy(() => import('./components/legal/FAQ'))
+const TermsOfService = lazy(() => import('./components/legal/TermsOfService'))
 const PremiumTab = lazy(() => import('./components/profile/PremiumTab'))
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [showAuth, setShowAuth] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    'feed' | 'search' | 'library' | 'profile' | 'premium' | 'policy' | 'faq'
+    'feed' | 'search' | 'library' | 'profile' | 'premium' | 'policy' | 'faq' | 'terms'
   >('feed')
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
 
@@ -55,18 +54,6 @@ export default function App() {
   const userId = session?.user?.id ?? null
   const { data: globalLibrary = [] } = useUserGames(userId)
   const { data: isPremium } = usePremiumStatus(userId)
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const upgraded = params.get('upgraded')
-    if (upgraded === 'true') {
-      toast.success('Payment successful! Your Premium features are activating and should appear within a few seconds.')
-      window.history.replaceState({}, '', window.location.pathname)
-    } else if (upgraded === 'cancelled') {
-      toast.info('Checkout cancelled — no charge was made.')
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-  }, [])
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -125,26 +112,6 @@ export default function App() {
     })
   }
 
-  const handlePremiumNavClick = async () => {
-    if (isPremium) {
-      try {
-        await openBillingPortal()
-      } catch (err: any) {
-        toast.error(err.message || 'Something went wrong.')
-      }
-    } else {
-      goToTab('premium')
-    }
-  }
-
-  const handleUpgradeClick = async () => {
-    try {
-      await startCheckout()
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong.')
-    }
-  }
-
   return (
     <div className="min-h-screen font-sans selection:bg-indigo-500/30 flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
       <nav className="sticky top-0 z-40 w-full max-w-[100vw] overflow-x-clip bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 mb-8 transition-colors duration-300">
@@ -167,15 +134,15 @@ export default function App() {
               Profile
             </button>
             <button
-              onClick={handlePremiumNavClick}
+              onClick={() => goToTab('premium')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 isPremium
                   ? navItemClass('premium')
                   : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10'
               }`}
             >
-              {isPremium ? <CreditCard className="w-3.5 h-3.5" /> : <Crown className="w-3.5 h-3.5" />}
-              {isPremium ? 'Manage Subscription' : 'Premium'}
+              <Crown className="w-3.5 h-3.5" />
+              {isPremium ? 'Premium' : 'Go Premium'}
             </button>
           </div>
 
@@ -235,7 +202,7 @@ export default function App() {
             </button>
             <button
               onClick={() => {
-                handlePremiumNavClick()
+                goToTab('premium')
                 setMobileMenuOpen(false)
               }}
               className={`flex items-center gap-1.5 text-left px-4 py-2 rounded-lg font-medium text-sm transition-all ${
@@ -244,8 +211,8 @@ export default function App() {
                   : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10'
               }`}
             >
-              {isPremium ? <CreditCard className="w-3.5 h-3.5" /> : <Crown className="w-3.5 h-3.5" />}
-              {isPremium ? 'Manage Subscription' : 'Premium'}
+              <Crown className="w-3.5 h-3.5" />
+              {isPremium ? 'Premium' : 'Go Premium'}
             </button>
             <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
             <button
@@ -296,7 +263,7 @@ export default function App() {
           )}
           {activeTab === 'premium' && (
             <PageTransition keyProp="premium">
-              <PremiumTab onUpgradeClick={handleUpgradeClick} />
+              <PremiumTab isPremium={!!isPremium} />
             </PageTransition>
           )}
           {activeTab === 'policy' && (
@@ -307,6 +274,11 @@ export default function App() {
           {activeTab === 'faq' && (
             <PageTransition keyProp="faq">
               <FAQ />
+            </PageTransition>
+          )}
+          {activeTab === 'terms' && (
+            <PageTransition keyProp="terms">
+              <TermsOfService />
             </PageTransition>
           )}
         </AnimatePresence>

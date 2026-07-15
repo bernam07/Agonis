@@ -15,6 +15,7 @@ serve(async (req) => {
     const { searchQuery, offset = 0, limit = 20 } = await req.json()
     const pageLimit = Math.min(Number(limit) || 20, 50)
     const pageOffset = Math.max(Number(offset) || 0, 0)
+    const safeSearchQuery = String(searchQuery ?? '').replace(/"/g, '\\"')
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -57,7 +58,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'text/plain',
       },
-      body: `search "${searchQuery}"; fields name, cover.url, summary, platforms.name, category, version_parent, status; limit ${candidateLimit};`
+      body: `search "${safeSearchQuery}"; fields name, cover.url, summary, platforms.name, category, version_parent, status; limit ${candidateLimit};`
     })
 
     const igdbCandidates = await igdbResponse.json()

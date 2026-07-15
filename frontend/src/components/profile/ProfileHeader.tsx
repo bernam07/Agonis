@@ -14,7 +14,8 @@
    limitations under the License.
 */
 
-import { Crown, Ban, Flag } from 'lucide-react'
+import { Ban, Flag } from 'lucide-react'
+import PremiumUsername from '../common/PremiumUsername'
 
 interface ProfileHeaderProps {
   profile: any;
@@ -69,12 +70,13 @@ export default function ProfileHeader({
 
         <div className="flex-1 w-full text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start mb-2">
-            <h2
-              className="text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2"
-              style={profile.is_premium && profile.accent_color ? { color: profile.accent_color } : undefined}
-            >
-              @{profile.username}
-              {profile.is_premium && <Crown className="w-5 h-5 text-amber-500 shrink-0" aria-label="Premium member" />}
+            <h2 className="text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2">
+              <PremiumUsername
+                username={profile.username}
+                isPremium={profile.is_premium}
+                accentColor={profile.accent_color}
+                iconClassName="w-5 h-5"
+              />
             </h2>
             {isCurrentUser ? (
               <button onClick={() => setIsEditing(true)} className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 rounded-lg transition-colors">

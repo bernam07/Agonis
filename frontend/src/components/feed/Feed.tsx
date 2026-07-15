@@ -41,11 +41,11 @@ async function fetchPostsPage(pageParam: number) {
     .select(
       `
       id, content, created_at, igdb_id, game_name, game_cover, image_url, has_spoilers,
-      profiles!posts_user_id_fkey (id, username, avatar_url, is_premium),
+      profiles!posts_user_id_fkey (id, username, avatar_url, is_premium, accent_color),
       likes (user_id),
       comments (
         id, content, created_at, user_id,
-        profiles!comments_user_id_fkey (id, username, avatar_url)
+        profiles!comments_user_id_fkey (id, username, avatar_url, is_premium, accent_color)
       )
     `
     )
@@ -218,19 +218,23 @@ export default function Feed({
       }
     })
 
-    if (hasLiked) {
-      await supabase.from('likes').delete().match({ post_id: postId, user_id: currentUserId })
-    } else {
-      await supabase.from('likes').insert({ post_id: postId, user_id: currentUserId })
+    const { error } = hasLiked
+      ? await supabase.from('likes').delete().match({ post_id: postId, user_id: currentUserId })
+      : await supabase.from('likes').insert({ post_id: postId, user_id: currentUserId })
 
-      if (currentUserId !== authorId) {
-        await supabase.from('notifications').insert({
-          receiver_id: authorId,
-          actor_id: currentUserId,
-          type: 'like',
-          post_id: postId,
-        })
-      }
+    if (error) {
+      toast.error('Failed to update like. Please try again.')
+      queryClient.invalidateQueries({ queryKey: POSTS_QUERY_KEY })
+      return
+    }
+
+    if (!hasLiked && currentUserId !== authorId) {
+      await supabase.from('notifications').insert({
+        receiver_id: authorId,
+        actor_id: currentUserId,
+        type: 'like',
+        post_id: postId,
+      })
     }
   }
 

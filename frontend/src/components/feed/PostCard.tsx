@@ -16,6 +16,7 @@
 
 import { Trash2, AlertTriangle, Flag } from 'lucide-react'
 import PostComments from './PostComments'
+import PremiumUsername from '../common/PremiumUsername'
 
 interface PostCardProps {
   post: any;
@@ -64,7 +65,11 @@ export default function PostCard({
           </div>
           <div>
             <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-              @{post.profiles?.username || 'unknown'}
+              <PremiumUsername
+                username={post.profiles?.username}
+                isPremium={post.profiles?.is_premium}
+                accentColor={post.profiles?.accent_color}
+              />
             </div>
             <div className="text-xs font-medium text-zinc-500">
               {new Date(post.created_at).toLocaleString([], {

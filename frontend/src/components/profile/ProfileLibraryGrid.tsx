@@ -66,7 +66,7 @@ export default function ProfileLibraryGrid({
                 {game.cover?.url ? <img src={game.cover.url.replace('t_thumb', 't_cover_big')} alt={game.name} className="w-full h-full object-cover" /> : null}
               </div>
               <div className="flex justify-center mt-auto">
-                {game.rating > 0 && <StarDisplay rating={game.rating} size={10} />}
+                <StarDisplay rating={game.rating} size={10} />
               </div>
             </div>
           ))}

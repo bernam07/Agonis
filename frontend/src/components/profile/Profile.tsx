@@ -27,6 +27,7 @@ import ProfileEditForm from './ProfileEditForm'
 import ProfileLibraryGrid from './ProfileLibraryGrid'
 import FollowListModal from './FollowListModal'
 import ProfileInsights from './ProfileInsights'
+import ProfileMasterpieces from './ProfileMasterpieces'
 import ReportModal from '../common/ReportModal'
 import { confirmToast } from '../../lib/confirmToast'
 import { FREE_LIST_LIMIT } from '../../lib/plans'
@@ -190,10 +191,10 @@ export default function Profile({
   const openFollowList = async (type: 'followers' | 'following') => {
     if (!canViewLibrary) return
     if (type === 'followers') {
-      const { data } = await supabase.from('follows').select('profiles!follows_follower_id_fkey(id, username, avatar_url)').eq('following_id', profile.id)
+      const { data } = await supabase.from('follows').select('profiles!follows_follower_id_fkey(id, username, avatar_url, is_premium, accent_color)').eq('following_id', profile.id)
       if (data) setFollowModalData({ title: 'Followers', users: data.map((d: any) => d.profiles) })
     } else {
-      const { data } = await supabase.from('follows').select('profiles!follows_following_id_fkey(id, username, avatar_url)').eq('follower_id', profile.id)
+      const { data } = await supabase.from('follows').select('profiles!follows_following_id_fkey(id, username, avatar_url, is_premium, accent_color)').eq('follower_id', profile.id)
       if (data) setFollowModalData({ title: 'Following', users: data.map((d: any) => d.profiles) })
     }
   }
@@ -489,6 +490,8 @@ export default function Profile({
               {libStats.averageRating > 0 && <StarDisplay rating={libStats.averageRating} size={16} />}
             </div>
           </div>
+
+          <ProfileMasterpieces favorites={libStats.favorites} handleGameClick={handleGameClick} />
 
           <div>
             <div className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-6 mt-8 overflow-x-auto custom-scrollbar">

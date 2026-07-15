@@ -15,6 +15,7 @@
 */
 
 import { createPortal } from 'react-dom'
+import PremiumUsername from '../common/PremiumUsername'
 
 interface FollowListModalProps {
   data: { title: string; users: any[] };
@@ -39,7 +40,9 @@ export default function FollowListModal({ data, onClose, onUserClick }: FollowLi
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800 shrink-0">
                   {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold">{u.username?.charAt(0).toUpperCase()}</div>}
                 </div>
-                <span className="font-bold text-zinc-800 dark:text-zinc-200 text-sm">@{u.username}</span>
+                <span className="font-bold text-zinc-800 dark:text-zinc-200 text-sm">
+                  <PremiumUsername username={u.username} isPremium={u.is_premium} accentColor={u.accent_color} />
+                </span>
               </div>
             ))
           )}

@@ -1,4 +1,4 @@
-import { act } from 'react'
+import { act, forwardRef, useEffect, useImperativeHandle } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 const { authMock } = vi.hoisted(() => ({
@@ -12,6 +12,19 @@ vi.mock('../../lib/supabase', () => ({
   supabase: {
     auth: authMock,
   },
+}))
+
+// Stubs the real hCaptcha widget (which needs a live browser/network) with one that
+// auto-verifies on mount and instantly "re-solves" whenever Auth.tsx resets it, so the
+// form's captcha-gated submit buttons unlock immediately for every attempt in the test.
+vi.mock('@hcaptcha/react-hcaptcha', () => ({
+  default: forwardRef(({ onVerify }: { onVerify: (token: string) => void }, ref) => {
+    useImperativeHandle(ref, () => ({ resetCaptcha: () => onVerify('test-captcha-token') }))
+    useEffect(() => {
+      onVerify('test-captcha-token')
+    }, [onVerify])
+    return null
+  }),
 }))
 
 import Auth from '../../components/auth/Auth'
@@ -37,6 +50,7 @@ describe('Auth', () => {
     expect(authMock.signInWithPassword).toHaveBeenCalledWith({
       email: 'user@example.com',
       password: 'secret123',
+      options: { captchaToken: 'test-captcha-token' },
     })
 
     await act(async () => {

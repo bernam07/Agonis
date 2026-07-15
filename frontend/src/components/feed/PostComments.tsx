@@ -15,6 +15,7 @@
 */
 
 import { Trash2 } from 'lucide-react'
+import PremiumUsername from '../common/PremiumUsername'
 
 interface PostCommentsProps {
   post: any;
@@ -68,7 +69,12 @@ export default function PostComments({
                       className="text-xs font-bold text-zinc-900 dark:text-zinc-200 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                       onClick={() => onUserClick(comment.profiles.id)}
                     >
-                      @{comment.profiles?.username}
+                      <PremiumUsername
+                        username={comment.profiles?.username}
+                        isPremium={comment.profiles?.is_premium}
+                        accentColor={comment.profiles?.accent_color}
+                        iconClassName="w-3 h-3"
+                      />
                     </span>
                     <span className="text-[9px] text-zinc-500 dark:text-zinc-600 font-medium">
                       {new Date(comment.created_at).toLocaleDateString([], {

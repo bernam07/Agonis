@@ -21,6 +21,7 @@ import GameModal from './GameModal'
 import { GameSkeleton } from '../common/Skeletons'
 import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger'
 import { dedupeGamesByTitle } from '../../lib/gameTitle'
+import PremiumUsername from '../common/PremiumUsername'
 
 const GAMES_PER_PAGE = 20
 const TRENDING_QUERY = 'The Last of Us'
@@ -81,7 +82,7 @@ export default function GameSearch({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, bio')
+        .select('id, username, avatar_url, bio, is_premium, accent_color')
         .ilike('username', `%${debouncedUserQuery}%`)
         .limit(20)
       if (error) throw error
@@ -224,7 +225,7 @@ export default function GameSearch({
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
-                  @{user.username}
+                  <PremiumUsername username={user.username} isPremium={user.is_premium} accentColor={user.accent_color} />
                 </h3>
                 {user.bio && <p className="text-xs text-zinc-500 truncate mt-0.5">{user.bio}</p>}
               </div>

@@ -3,6 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const KOFI_VERIFICATION_TOKEN = Deno.env.get('KOFI_VERIFICATION_TOKEN') ?? ''
 
+// Premium is a one-time €3 purchase (Ko-fi doesn't support decimal minimums). Any
+// amount at or above this also unlocks Premium — supporters who give more are still
+// welcome. This assumes the Ko-fi account's payout currency is EUR, since Ko-fi
+// reports `amount` as a plain number in whatever currency the creator's account is
+// set to, not necessarily what the supporter paid in.
+const MIN_PREMIUM_AMOUNT = 3
+
 const supabaseClient = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -53,6 +60,8 @@ serve(async (req) => {
     }
 
     const matched = matches.length === 1 ? matches[0] : null
+    const amount = Number.parseFloat(payload.amount ?? '0')
+    const belowMinimum = !(amount >= MIN_PREMIUM_AMOUNT)
 
     await supabaseClient.from('kofi_payments').insert({
       kofi_transaction_id: payload.kofi_transaction_id ?? null,
@@ -65,9 +74,10 @@ serve(async (req) => {
       matched_user_id: matched?.id ?? null,
       matched_username: matched?.username ?? null,
       ambiguous: matches.length > 1,
+      below_minimum: belowMinimum,
     })
 
-    if (matched) {
+    if (matched && !belowMinimum) {
       await supabaseClient.from('profiles').update({ is_premium: true }).eq('id', matched.id)
     }
 

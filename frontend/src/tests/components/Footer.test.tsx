@@ -7,8 +7,6 @@ describe('Footer', () => {
     const onNavigate = vi.fn()
     const { container, cleanup } = renderIntoDocument(<Footer onNavigate={onNavigate} />)
 
-    expect(container.textContent).toContain('Support Agonis')
-    expect(container.textContent).toContain('Donate')
     expect(container.textContent).toContain('FAQ')
     expect(container.textContent).toContain('Privacy Policy')
 

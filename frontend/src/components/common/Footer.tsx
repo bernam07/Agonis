@@ -14,10 +14,14 @@
    limitations under the License.
 */
 
+import { useCookieConsent } from '../../context/CookieConsentContext'
+
 export default function Footer({ onNavigate }: { onNavigate: (tab: string) => void }) {
+  const { openSettings } = useCookieConsent()
+
   return (
     <footer className="mt-16 py-10 border-t border-zinc-200/50 dark:border-zinc-800/50 flex flex-col items-center">
-      <div className="flex justify-center gap-6 text-xs font-bold text-zinc-500 mb-6">
+      <div className="flex flex-wrap justify-center gap-6 text-xs font-bold text-zinc-500 mb-6">
         <button onClick={() => onNavigate('faq')} className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
           FAQ
         </button>
@@ -32,6 +36,9 @@ export default function Footer({ onNavigate }: { onNavigate: (tab: string) => vo
           className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
         >
           Terms of Service
+        </button>
+        <button onClick={openSettings} className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
+          Cookie Settings
         </button>
         <a href="mailto:contact@agonis.xyz" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
           Contact Us

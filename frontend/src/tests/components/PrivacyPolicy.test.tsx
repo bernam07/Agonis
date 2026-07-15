@@ -8,7 +8,7 @@ describe('PrivacyPolicy', () => {
 
     expect(container.textContent).toContain('Privacy Policy')
     expect(container.textContent).toContain('Information We Collect')
-    expect(container.textContent).toContain('Third-Party Services')
+    expect(container.textContent).toContain('Third-Party Processors')
 
     cleanup()
   })

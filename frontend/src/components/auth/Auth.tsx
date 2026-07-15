@@ -33,6 +33,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
 
   const captchaRef = useRef<HCaptcha>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const resetCaptcha = () => {
     setCaptchaToken(null)
@@ -87,6 +88,11 @@ export default function Auth({ onBack }: { onBack: () => void }) {
 
     if (password.length < 6) {
       setErrorMsg('Password must be at least 6 characters long.')
+      return
+    }
+
+    if (!agreedToTerms) {
+      setErrorMsg('Please agree to the Terms of Service and Privacy Policy to continue.')
       return
     }
 
@@ -214,6 +220,23 @@ export default function Auth({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
+          {!isResetting && (
+            <label className="flex items-start gap-2.5 text-xs text-zinc-600 dark:text-zinc-400 font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked)
+                  if (errorMsg) setErrorMsg(null)
+                }}
+                className="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 accent-indigo-600 shrink-0"
+              />
+              <span>
+                I'm at least 16 years old and agree to Agonis's Terms of Service and Privacy Policy.
+              </span>
+            </label>
+          )}
+
           {HCAPTCHA_SITE_KEY && (
             <div className="flex justify-center">
               <HCaptcha
@@ -259,7 +282,7 @@ export default function Auth({ onBack }: { onBack: () => void }) {
                 <button
                   type="button"
                   onClick={handleSignUp}
-                  disabled={loading || (CAPTCHA_REQUIRED && !captchaToken)}
+                  disabled={loading || !agreedToTerms || (CAPTCHA_REQUIRED && !captchaToken)}
                   className="w-full bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm border border-zinc-300 dark:border-zinc-700"
                 >
                   Create Account

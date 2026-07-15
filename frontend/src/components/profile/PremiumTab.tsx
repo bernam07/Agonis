@@ -18,7 +18,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Crown, ListChecks, Image, Palette, BarChart3, DownloadCloud, Copy, Check, HeartHandshake } from 'lucide-react'
-import { PLAN_FEATURES } from '../../lib/plans'
+import { PLAN_FEATURES, PREMIUM_PRICE } from '../../lib/plans'
 import { supabase } from '../../lib/supabase'
 import { useCurrentUserId } from '../../hooks/useCurrentUserId'
 
@@ -72,7 +72,7 @@ export default function PremiumTab({ isPremium }: PremiumTabProps) {
         <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium max-w-md">
           {isPremium
             ? 'Thanks for supporting Agonis. All Premium features below are unlocked on your account.'
-            : 'Unlock unlimited lists, watermark-free share cards, and a custom profile accent color with a one-time payment.'}
+            : `Unlock unlimited lists, watermark-free share cards, and a custom profile accent color with a one-time ${PREMIUM_PRICE} payment.`}
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export default function PremiumTab({ isPremium }: PremiumTabProps) {
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col gap-4">
           <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider">How to unlock Premium</h3>
           <ol className="space-y-3 text-sm text-zinc-700 dark:text-zinc-300 font-medium list-decimal list-inside">
-            <li>Make a one-time payment on our Ko-fi page (any amount).</li>
+            <li>Make a one-time payment of <span className="font-bold">{PREMIUM_PRICE}</span> on our Ko-fi page.</li>
             <li>
               In the support message, write your Agonis username:{' '}
               {username ? (
@@ -138,7 +138,8 @@ export default function PremiumTab({ isPremium }: PremiumTabProps) {
             Support on Ko-fi
           </a>
           <p className="text-[11px] text-zinc-500 font-medium">
-            If Premium doesn't unlock within a few minutes, double-check the username in your message and{' '}
+            Payments below {PREMIUM_PRICE} won't unlock Premium automatically. If yours doesn't unlock within a
+            few minutes, double-check the amount and username in your message, then{' '}
             <a href="mailto:contact@agonis.xyz" className="text-indigo-600 dark:text-indigo-400 hover:underline">contact us</a>.
           </p>
         </div>

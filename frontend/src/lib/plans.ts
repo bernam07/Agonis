@@ -15,6 +15,7 @@
 */
 
 export const FREE_LIST_LIMIT = 3
+export const PREMIUM_PRICE = '€3'
 
 export interface PlanFeature {
   label: string

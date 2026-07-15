@@ -14,31 +14,9 @@
    limitations under the License.
 */
 
-import { Coffee } from 'lucide-react'
-
-export default function Footer({ onNavigate, showKofi = true }: { onNavigate: (tab: string) => void; showKofi?: boolean }) {
+export default function Footer({ onNavigate }: { onNavigate: (tab: string) => void }) {
   return (
     <footer className="mt-16 py-10 border-t border-zinc-200/50 dark:border-zinc-800/50 flex flex-col items-center">
-      {showKofi && (
-      <div className="mb-8 p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-sm w-full text-center">
-        <h3 className="text-zinc-900 dark:text-white font-bold mb-2 flex items-center justify-center gap-2">
-          Support Agonis <Coffee className="w-5 h-5 text-amber-600" />
-        </h3>
-        <p className="text-zinc-600 dark:text-zinc-400 text-xs font-medium mb-4">
-          Agonis is built and maintained by a solo developer. If you enjoy tracking your games here,
-          consider buying me a coffee to keep the servers running!
-        </p>
-        <a
-          href="https://ko-fi.com/bernam07"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-block w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 font-black text-sm py-3 px-4 rounded-xl transition-colors"
-        >
-          Donate
-        </a>
-      </div>
-      )}
-
       <div className="flex justify-center gap-6 text-xs font-bold text-zinc-500 mb-6">
         <button onClick={() => onNavigate('faq')} className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
           FAQ

@@ -15,7 +15,11 @@
 */
 
 import { useState } from 'react'
+import { Download, AlertTriangle } from 'lucide-react'
 import { ACCENT_COLORS } from '../../lib/plans'
+import { exportUserData } from '../../lib/exportUserData'
+import DeleteAccountModal from './DeleteAccountModal'
+import { toast } from 'sonner'
 
 interface ProfileEditFormProps {
   editUsername: string;
@@ -32,24 +36,29 @@ interface ProfileEditFormProps {
   isPremium: boolean;
   accentColor: string | null;
   onSelectAccentColor: (color: string) => void;
-  onImportSteam: (steamId: string) => Promise<void>;
+  userId: string;
+  username: string;
 }
 
 export default function ProfileEditForm({
   editUsername, setEditUsername, editBio, setEditBio, editAvatar,
   editIsPublic, setEditIsPublic, uploadingAvatar, handleAvatarUpload,
-  saveProfile, onCancel, isPremium, accentColor, onSelectAccentColor, onImportSteam
+  saveProfile, onCancel, isPremium, accentColor, onSelectAccentColor,
+  userId, username,
 }: ProfileEditFormProps) {
-  const [steamId, setSteamId] = useState('')
-  const [importingSteam, setImportingSteam] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false)
 
-  const handleImportClick = async () => {
-    if (!steamId.trim() || importingSteam) return
-    setImportingSteam(true)
-    await onImportSteam(steamId.trim())
-    setImportingSteam(false)
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      await exportUserData(userId)
+    } catch {
+      toast.error('Could not export your data. Please try again.')
+    } finally {
+      setExporting(false)
+    }
   }
-
   return (
     <div className="flex flex-col gap-4 w-full max-w-md mx-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8">
       <h3 className="text-zinc-900 dark:text-white font-bold border-b border-zinc-200 dark:border-zinc-800 pb-2">Profile & Settings</h3>
@@ -95,34 +104,35 @@ export default function ProfileEditForm({
         </div>
       )}
 
-      {isPremium && (
-        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 block mb-2">Import from Steam</span>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={steamId}
-              onChange={(e) => setSteamId(e.target.value)}
-              placeholder="Steam ID or profile URL"
-              className="flex-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 text-xs"
-            />
-            <button
-              onClick={handleImportClick}
-              disabled={!steamId.trim() || importingSteam}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 transition-colors text-white px-4 py-2 rounded-lg font-bold text-xs shrink-0"
-            >
-              {importingSteam ? 'Importing...' : 'Import'}
-            </button>
-          </div>
-          <p className="text-[10px] text-zinc-500 font-medium mt-2">
-            Your Steam profile and game details must be set to public. New games are added to your backlog.
-          </p>
-        </div>
-      )}
       <div className="flex gap-2 mt-2">
         <button onClick={saveProfile} className="flex-1 bg-indigo-600 hover:bg-indigo-500 transition-colors text-white px-4 py-2 rounded-lg font-bold text-sm">Save Changes</button>
         <button onClick={onCancel} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-lg font-bold text-sm">Cancel</button>
       </div>
+
+      <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4 mt-2 flex flex-col gap-2">
+        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Privacy & Data</span>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          className="flex items-center justify-center gap-2 bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:opacity-50 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm font-bold text-zinc-700 dark:text-zinc-300 transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          {exporting ? 'Preparing export...' : 'Export My Data'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowDeleteAccount(true)}
+          className="flex items-center justify-center gap-2 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 p-3 rounded-lg border border-rose-200 dark:border-rose-500/30 text-sm font-bold text-rose-600 dark:text-rose-400 transition-colors"
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Delete Account
+        </button>
+      </div>
+
+      {showDeleteAccount && (
+        <DeleteAccountModal username={username} onClose={() => setShowDeleteAccount(false)} />
+      )}
     </div>
   )
 }

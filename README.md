@@ -28,7 +28,6 @@
 
 ### Trust & Safety
 - **Blocking & reporting** — block abusive accounts and report posts or users.
-- **Bot protection** — hCaptcha-gated authentication.
 - **Data portability** — export your full account data as JSON at any time.
 - **Account deletion** — permanently delete your account and all associated data, on request.
 

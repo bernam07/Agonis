@@ -50,8 +50,8 @@ export default function PrivacyPolicy() {
           </p>
           <p>
             <strong>Technical data:</strong> basic device/browser information and error diagnostics
-            (via Sentry) if the app crashes, aggregate, non-identifying visit statistics (via Vercel
-            Analytics), and bot-detection signals processed by hCaptcha when you sign up or log in.
+            (via Sentry) if the app crashes, and aggregate, non-identifying visit statistics (via Vercel
+            Analytics).
           </p>
         </section>
 
@@ -63,10 +63,9 @@ export default function PrivacyPolicy() {
             signed up for.
           </p>
           <p className="mb-2">
-            <strong>Legitimate interest:</strong> fraud/abuse prevention (hCaptcha), keeping the service
-            running without crashing (Sentry error tracking), and understanding aggregate usage to
-            improve Agonis (Vercel Analytics). These are kept to the minimum needed and you can object
-            at any time (see Section 7).
+            <strong>Legitimate interest:</strong> keeping the service running without crashing (Sentry
+            error tracking), and understanding aggregate usage to improve Agonis (Vercel Analytics).
+            These are kept to the minimum needed and you can object at any time (see Section 7).
           </p>
           <p>
             <strong>Consent:</strong> matching an optional Ko-fi payment to your account, which you
@@ -94,7 +93,6 @@ export default function PrivacyPolicy() {
             <li><strong>Ko-fi</strong> — payment processing for optional Premium support.</li>
             <li><strong>Sentry</strong> — error/crash tracking, to fix bugs.</li>
             <li><strong>Vercel Analytics</strong> — aggregate, cookie-free visit statistics.</li>
-            <li><strong>hCaptcha</strong> — bot and abuse protection on sign-up/login.</li>
           </ul>
           <p className="mt-2">
             Some of these providers are based outside the European Economic Area (EEA), including in
